@@ -11,4 +11,5 @@ namespace HyperCar.DAL.Enums
         Cancelled = 6,
         Refunded = 7
     }
+
 }

@@ -1,4 +1,5 @@
 using HyperCar.BLL.DTOs;
+using HyperCar.BLL.Helpers;
 using HyperCar.BLL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -48,13 +49,14 @@ namespace HyperCar.Web.Pages.Admin
 
             if (Enum.TryParse<HyperCar.DAL.Enums.OrderStatus>(newStatus, out var statusEnum))
             {
-                await _orderService.UpdateStatusAsync(orderId, statusEnum, $"Status updated to {newStatus}", "Admin");
+                var viStatus = StatusHelper.OrderStatusToVietnamese(newStatus);
+                await _orderService.UpdateStatusAsync(orderId, statusEnum, $"Cập nhật trạng thái sang {viStatus}", "Admin");
 
                 var order = await _orderService.GetByIdAsync(orderId);
                 if (order != null)
                 {
                     // Notify admin bell
-                    await _hubContext.Clients.Group("Admins").SendAsync("ReceiveAdminNotification", $"Order #{orderId} → {newStatus}", "order");
+                    await _hubContext.Clients.Group("Admins").SendAsync("ReceiveAdminNotification", $"Đơn hàng #{orderId} → {StatusHelper.OrderStatusToVietnamese(newStatus)}", "order");
 
                     // Notify customer bell + toast (Vietnamese)
                     var vnMessage = newStatus switch

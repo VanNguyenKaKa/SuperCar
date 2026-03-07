@@ -1,4 +1,5 @@
 using HyperCar.DAL.Enums;
+using HyperCar.BLL.Helpers;
 
 namespace HyperCar.BLL.DTOs
 {
@@ -13,6 +14,8 @@ namespace HyperCar.BLL.DTOs
         public OrderStatus Status { get; set; }
         /// <summary>String version of Status for Presentation layer (avoids DAL enum import)</summary>
         public string StatusText => Status.ToString();
+        /// <summary>Vietnamese display text for UI</summary>
+        public string StatusDisplayText => StatusHelper.ToVietnamese(Status);
         public UserOrderAction UserAction { get; set; }
         public string? ShippingAddress { get; set; }
         public string? ReceiverName { get; set; }
@@ -62,6 +65,8 @@ namespace HyperCar.BLL.DTOs
         public PaymentStatus Status { get; set; }
         /// <summary>String version of Status for Presentation layer</summary>
         public string StatusText => Status.ToString();
+        /// <summary>Vietnamese display text for UI</summary>
+        public string StatusDisplayText => StatusHelper.ToVietnamese(Status);
         public string? VnPayResponseCode { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime? PaidAt { get; set; }
@@ -77,6 +82,8 @@ namespace HyperCar.BLL.DTOs
         public ShippingStatus Status { get; set; }
         /// <summary>String version of Status for Presentation layer</summary>
         public string StatusText => Status.ToString();
+        /// <summary>Vietnamese display text for UI</summary>
+        public string StatusDisplayText => StatusHelper.ToVietnamese(Status);
         public DateTime? EstimatedDelivery { get; set; }
         public string? Address { get; set; }
     }

@@ -1,21 +1,21 @@
 @page
 @model HyperCar.Web.Pages.Cars.IndexModel
 @{
-    ViewData["Title"] = "HyperCar Collection";
+    ViewData["Title"] = "Bộ sưu tập HyperCar";
 }
 
 <section class="pt-5 mt-5">
     <div class="container py-4">
-        <h2 class="section-title mb-4">Our <span class="text-accent">Collection</span></h2>
+        <h2 class="section-title mb-4">Bộ <span class="text-accent">sưu tập</span></h2>
 
         <!-- Filters -->
         <form method="get" class="row g-3 mb-4">
             <div class="col-md-3">
-                <input type="text" name="searchTerm" class="form-control" placeholder="Search cars..." value="@Model.Filter.SearchTerm" />
+                <input type="text" name="searchTerm" class="form-control" placeholder="Tìm kiếm xe..." value="@Model.Filter.SearchTerm" />
             </div>
             <div class="col-md-2">
                 <select name="brandId" class="form-select">
-                    <option value="">All Brands</option>
+                    <option value="">Tất cả hãng</option>
                     @foreach (var brand in Model.Brands ?? Enumerable.Empty<HyperCar.BLL.DTOs.BrandDto>())
                     {
                         <option value="@brand.Id" selected="@(Model.Filter.BrandId == brand.Id)">@brand.Name</option>
@@ -24,7 +24,7 @@
             </div>
             <div class="col-md-2">
                 <select name="category" class="form-select">
-                    <option value="">All Categories</option>
+                    <option value="">Tất cả danh mục</option>
                     @foreach (var cat in Model.Categories ?? Enumerable.Empty<string>())
                     {
                         <option value="@cat" selected="@(Model.Filter.Category == cat)">@cat</option>
@@ -33,10 +33,10 @@
             </div>
             <div class="col-md-2">
                 <select name="sortBy" class="form-select">
-                    <option value="newest">Newest</option>
-                    <option value="price" selected="@(Model.Filter.SortBy == "price")">Price</option>
-                    <option value="horsepower" selected="@(Model.Filter.SortBy == "horsepower")">Power</option>
-                    <option value="topspeed" selected="@(Model.Filter.SortBy == "topspeed")">Speed</option>
+                    <option value="newest">Mới nhất</option>
+                    <option value="price" selected="@(Model.Filter.SortBy == "price")">Giá</option>
+                    <option value="horsepower" selected="@(Model.Filter.SortBy == "horsepower")">Mã lực</option>
+                    <option value="topspeed" selected="@(Model.Filter.SortBy == "topspeed")">Tốc độ</option>
                 </select>
             </div>
             <div class="col-md-1">
@@ -55,7 +55,7 @@
                             <div class="car-card-img">
                                 <img src="@(car.ImageUrl ?? "/images/car-placeholder.jpg")" alt="@car.Name" />
                                 <div class="car-card-overlay">
-                                    <a href="/Cars/Details?id=@car.Id" class="btn btn-accent btn-sm">View Details</a>
+                                    <a href="/Cars/Details?id=@car.Id" class="btn btn-accent btn-sm">Xem chi tiết</a>
                                 </div>
                             </div>
                             <div class="car-card-body">

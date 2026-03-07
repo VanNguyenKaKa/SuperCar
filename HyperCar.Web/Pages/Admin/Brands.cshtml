@@ -1,15 +1,15 @@
 @page
 @model HyperCar.Web.Pages.Admin.BrandsModel
 @{
-    ViewData["Title"] = "Manage Brands";
+    ViewData["Title"] = "Quản lý hãng xe";
 }
 
 <section class="pt-5 mt-5">
     <div class="container-fluid py-4 px-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="section-title mb-0"><i class="fas fa-tags me-2"></i>Manage <span class="text-accent">Brands</span></h2>
-            <button class="btn btn-accent" data-bs-toggle="modal" data-bs-target="#brandModal" onclick="resetBrandForm()">
-                <i class="fas fa-plus me-1"></i>Add Brand
+            <h2 class="section-title mb-0"><i class="fas fa-tags me-2"></i>Quản lý <span class="text-accent">Hãng xe</span></h2>
+            <button class="btn btn-accent" data-bs-toggle="modal" data-bs-target="#brandModal" onclick="openAddBrand()">
+                <i class="fas fa-plus me-1"></i>Thêm hãng
             </button>
         </div>
 
@@ -30,15 +30,15 @@
                                     <div class="mb-3"><i class="fas fa-building fa-3x text-accent"></i></div>
                                 }
                                 <h5 class="card-title">@brand.Name</h5>
-                                <p class="text-muted small mb-1">@brand.Country</p>
-                                <span class="badge bg-accent mb-2">@brand.CarCount cars</span>
+                                <small class="text-muted"><i class="fas fa-globe me-1"></i>@brand.Country</small>
+                                <small class="text-muted"><i class="fas fa-car me-1"></i>@brand.CarCount xe</small>
                                 <p class="text-muted small">@(brand.Description?.Length > 80 ? brand.Description.Substring(0, 80) + "..." : brand.Description)</p>
                             </div>
                             <div class="card-footer border-secondary d-flex gap-2">
                                 <button class="btn btn-sm btn-outline-warning flex-fill" onclick="editBrand(@brand.Id, '@brand.Name.Replace("'","\\'")','@brand.Country?.Replace("'","\\'")','@brand.Logo','@brand.Description?.Replace("'","\\'").Replace("\n","")')">
                                     <i class="fas fa-edit me-1"></i>Edit
                                 </button>
-                                <form method="post" asp-page-handler="Delete" class="flex-fill" onsubmit="return confirm('Delete this brand?')">
+                                <form method="post" asp-page-handler="Delete" class="flex-fill" onsubmit="return confirm('Xóa hãng này?')">
                                     <input type="hidden" name="id" value="@brand.Id" />
                                     <button class="btn btn-sm btn-outline-danger w-100"><i class="fas fa-trash me-1"></i>Delete</button>
                                 </form>
@@ -60,7 +60,7 @@
     <div class="modal-dialog">
         <div class="modal-content bg-dark border-secondary">
             <div class="modal-header border-secondary">
-                <h5 class="modal-title" id="brandModalTitle"><i class="fas fa-tags me-2"></i>Add Brand</h5>
+                <h5 class="modal-title" id="brandModalLabel"><i class="fas fa-tags me-2"></i>Thêm hãng</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="brandForm" method="post" asp-page-handler="Create" enctype="multipart/form-data">
@@ -68,11 +68,11 @@
                     <input type="hidden" id="brandEditId" name="EditId" />
                     <input type="hidden" id="brandLogoUrl" name="BrandInput.Logo" />
                     <div class="mb-3">
-                        <label class="form-label">Name</label>
+                        <label class="form-label">Tên hãng</label>
                         <input name="BrandInput.Name" id="brandName" class="form-control bg-dark text-light border-secondary" required />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Country</label>
+                        <label class="form-label">Quốc gia</label>
                         <input name="BrandInput.Country" id="brandCountry" class="form-control bg-dark text-light border-secondary" />
                     </div>
                     <div class="mb-3">
@@ -81,19 +81,19 @@
                         <small class="text-muted">Upload logo to Cloudinary. Leave empty to keep existing logo when editing.</small>
                     </div>
                     <div class="mb-3" id="brandLogoPreviewContainer" style="display:none;">
-                        <label class="form-label">Logo Preview</label>
+                        <label class="form-label">Logo</label>
                         <div>
                             <img id="brandLogoPreview" class="rounded" style="max-width:100px;max-height:100px;object-fit:contain;" />
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Description</label>
+                        <label class="form-label">Mô tả</label>
                         <textarea name="BrandInput.Description" id="brandDesc" rows="3" class="form-control bg-dark text-light border-secondary"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer border-secondary">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-accent" id="brandSubmitBtn">Create Brand</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-accent" id="brandSubmitBtn">Tạo hãng</button>
                 </div>
             </form>
         </div>

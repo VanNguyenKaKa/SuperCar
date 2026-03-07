@@ -1,12 +1,12 @@
 @page
 @model HyperCar.Web.Pages.Cart.IndexModel
 @{
-    ViewData["Title"] = "Shopping Cart";
+    ViewData["Title"] = "Giỏ hàng";
 }
 
 <section class="pt-5 mt-5">
     <div class="container py-4">
-        <h2 class="section-title mb-4"><i class="fas fa-shopping-cart me-2"></i>Shopping <span class="text-accent">Cart</span></h2>
+        <h2 class="section-title mb-4"><i class="fas fa-shopping-cart me-2"></i>Giỏ <span class="text-accent">hàng</span></h2>
 
         @if (Model.Cart?.Items?.Any() == true)
         {
@@ -45,23 +45,23 @@
                 <div class="col-lg-4">
                     <div class="card bg-dark border-secondary">
                         <div class="card-body">
-                            <h5 class="card-title">Order Summary</h5>
+                            <h5 class="card-title">Tóm tắt đơn hàng</h5>
                             <hr />
                             <div class="d-flex justify-content-between mb-2">
-                                <span>Items (@Model.Cart.TotalItems)</span>
+                                <span>Sản phẩm (@Model.Cart.TotalItems)</span>
                                 <strong>$@Model.Cart.TotalAmount.ToString("N0")</strong>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
-                                <span>Shipping</span>
-                                <span class="text-muted">Calculated at checkout</span>
+                                <span>Vận chuyển</span>
+                                <span class="text-muted">Tính khi thanh toán</span>
                             </div>
                             <hr />
                             <div class="d-flex justify-content-between mb-3">
-                                <h5>Total</h5>
+                                <h5>Tổng cộng</h5>
                                 <h5 class="text-accent">$@Model.Cart.TotalAmount.ToString("N0")</h5>
                             </div>
                             <a href="/Checkout" class="btn btn-accent w-100 btn-lg">
-                                <i class="fas fa-credit-card me-2"></i>Proceed to Checkout
+                                <i class="fas fa-credit-card me-2"></i>Tiến hành thanh toán
                             </a>
                         </div>
                     </div>
@@ -72,9 +72,9 @@
         {
             <div class="text-center py-5">
                 <i class="fas fa-shopping-cart fa-5x text-muted mb-3"></i>
-                <h3>Your cart is empty</h3>
-                <p class="text-muted">Browse our exclusive collection and find your dream hypercar.</p>
-                <a href="/Cars" class="btn btn-accent btn-lg mt-3">Explore Collection</a>
+                <h3>Giỏ hàng trống</h3>
+                <p class="text-muted">Khám phá bộ sưu tập siêu xe độc quyền và tìm chiếc xe mơ ước.</p>
+                <a href="/Cars" class="btn btn-accent btn-lg mt-3">Khám phá bộ sưu tập</a>
             </div>
         }
     </div>

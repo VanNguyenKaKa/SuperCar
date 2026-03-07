@@ -2,7 +2,7 @@
 @using HyperCar.BLL.DTOs
 @model HyperCar.Web.Pages.IndexModel
 @{
-    ViewData["Title"] = "World's Most Exclusive Hypercars";
+    ViewData["Title"] = "Siêu xe độc quyền hàng đầu thế giới";
 }
 
 <!-- Hero Section -->
@@ -11,10 +11,10 @@
     <div class="container position-relative" style="z-index: 2;">
         <div class="row align-items-center min-vh-100">
             <div class="col-lg-7">
-                <h1 class="hero-title">Experience<br /><span class="text-accent">Automotive</span> Excellence</h1>
-                <p class="hero-subtitle">Discover the world's most exclusive hypercars. From Bugatti to Koenigsegg, your dream machine awaits.</p>
-                <a href="/Cars" class="btn btn-accent btn-lg me-3"><i class="fas fa-car me-2"></i>View Collection</a>
-                <a href="#featured" class="btn btn-outline-light btn-lg"><i class="fas fa-arrow-down me-2"></i>Explore</a>
+                <h1 class="hero-title">Trải nghiệm<br /><span class="text-accent">Đẳng cấp</span> Siêu xe</h1>
+                <p class="hero-subtitle">Khám phá những siêu xe độc quyền nhất thế giới. Từ Bugatti đến Koenigsegg, chiếc xe mơ ước đang chờ bạn.</p>
+                <a href="/Cars" class="btn btn-accent btn-lg me-3"><i class="fas fa-car me-2"></i>Xem bộ sưu tập</a>
+                <a href="#featured" class="btn btn-outline-light btn-lg"><i class="fas fa-arrow-down me-2"></i>Khám phá</a>
             </div>
         </div>
     </div>
@@ -26,19 +26,19 @@
         <div class="row text-center">
             <div class="col-md-3">
                 <h2 class="text-accent fw-bold mb-0">@Model.TotalCars+</h2>
-                <small class="text-muted">Hypercars Available</small>
+                <small class="text-muted">Siêu xe hiện có</small>
             </div>
             <div class="col-md-3">
                 <h2 class="text-accent fw-bold mb-0">@Model.Brands?.Count()+</h2>
-                <small class="text-muted">Premium Brands</small>
+                <small class="text-muted">Hãng xe cao cấp</small>
             </div>
             <div class="col-md-3">
                 <h2 class="text-accent fw-bold mb-0">2000+</h2>
-                <small class="text-muted">Horsepower Max</small>
+                <small class="text-muted">Mã lực tối đa</small>
             </div>
             <div class="col-md-3">
                 <h2 class="text-accent fw-bold mb-0">$600K+</h2>
-                <small class="text-muted">Starting From</small>
+                <small class="text-muted">Giá từ</small>
             </div>
         </div>
     </div>
@@ -48,8 +48,8 @@
 <section id="featured" class="py-5">
     <div class="container">
         <div class="text-center mb-5">
-            <h2 class="section-title">Featured <span class="text-accent">Collection</span></h2>
-            <p class="text-muted">Hand-picked masterpieces from the world's finest manufacturers</p>
+            <h2 class="section-title">Bộ sưu tập <span class="text-accent">Nổi bật</span></h2>
+            <p class="text-muted">Những kiệt tác được chọn lọc từ các nhà sản xuất hàng đầu thế giới</p>
         </div>
         <div class="row g-4">
             @if (Model.FeaturedCars != null)
@@ -61,7 +61,7 @@
                             <div class="car-card-img">
                                 <img src="@(car.ImageUrl ?? "/images/car-placeholder.jpg")" alt="@car.Name" />
                                 <div class="car-card-overlay">
-                                    <a href="/Cars/Details?id=@car.Id" class="btn btn-accent btn-sm">View Details</a>
+                                    <a href="/Cars/Details?id=@car.Id" class="btn btn-accent btn-sm">Xem chi tiết</a>
                                 </div>
                             </div>
                             <div class="car-card-body">
@@ -75,11 +75,11 @@
                                     <span class="car-price">$@car.Price.ToString("N0")</span>
                                     @if (car.Stock > 0)
                                     {
-                                        <span class="badge bg-success"><i class="fas fa-check"></i> In Stock</span>
+                                        <span class="badge bg-success"><i class="fas fa-check"></i> Còn hàng</span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-danger">Sold Out</span>
+                                        <span class="badge bg-danger">Hết hàng</span>
                                     }
                                 </div>
                             </div>
@@ -89,7 +89,7 @@
             }
         </div>
         <div class="text-center mt-5">
-            <a href="/Cars" class="btn btn-outline-accent btn-lg">View Full Collection <i class="fas fa-arrow-right ms-2"></i></a>
+            <a href="/Cars" class="btn btn-outline-accent btn-lg">Xem toàn bộ bộ sưu tập <i class="fas fa-arrow-right ms-2"></i></a>
         </div>
     </div>
 </section>
@@ -98,7 +98,7 @@
 <section class="py-5 bg-dark-subtle">
     <div class="container">
         <div class="text-center mb-5">
-            <h2 class="section-title">Premium <span class="text-accent">Brands</span></h2>
+            <h2 class="section-title">Hãng xe <span class="text-accent">Cao cấp</span></h2>
         </div>
         <div class="row g-4 justify-content-center">
             @if (Model.Brands != null)
@@ -108,7 +108,7 @@
                     <div class="col-lg-3 col-md-4 col-6">
                         <a href="/Cars?brandId=@brand.Id" class="brand-card text-decoration-none">
                             <h5 class="mb-1">@brand.Name</h5>
-                            <small class="text-muted">@brand.Country · @brand.CarCount cars</small>
+                            <small class="text-muted">@brand.Country · @brand.CarCount xe</small>
                         </a>
                     </div>
                 }

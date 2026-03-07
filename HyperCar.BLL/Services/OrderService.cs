@@ -1,4 +1,5 @@
 using HyperCar.BLL.DTOs;
+using HyperCar.BLL.Helpers;
 using HyperCar.BLL.Interfaces;
 using HyperCar.DAL.Entities;
 using HyperCar.DAL.Enums;
@@ -64,7 +65,7 @@ namespace HyperCar.BLL.Services
 
             // Create initial transaction history entry
             await AddTransactionHistoryAsync(order.Id, null, OrderStatus.Pending.ToString(),
-                "Order created", "System");
+                "Tạo đơn hàng", "System");
 
             // Create payment record (pending)
             var payment = new Payment
@@ -187,7 +188,7 @@ namespace HyperCar.BLL.Services
 
             // Record status change in timeline
             await AddTransactionHistoryAsync(orderId, oldStatus.ToString(), newStatus.ToString(),
-                note ?? $"Status changed to {newStatus}", changedBy ?? "System");
+                note ?? $"Cập nhật trạng thái sang {StatusHelper.ToVietnamese(newStatus)}", changedBy ?? "System");
 
             await _unitOfWork.SaveChangesAsync();
             return true;
@@ -207,7 +208,7 @@ namespace HyperCar.BLL.Services
             _unitOfWork.Orders.Update(order);
 
             await AddTransactionHistoryAsync(orderId, OrderStatus.Delivered.ToString(),
-                OrderStatus.Completed.ToString(), "Customer confirmed receipt", userId);
+                OrderStatus.Completed.ToString(), "Khách hàng xác nhận đã nhận hàng", userId);
 
             await _unitOfWork.SaveChangesAsync();
             return true;
@@ -226,7 +227,7 @@ namespace HyperCar.BLL.Services
             _unitOfWork.Orders.Update(order);
 
             await AddTransactionHistoryAsync(orderId, order.Status.ToString(),
-                order.Status.ToString(), "Customer requested return", userId);
+                order.Status.ToString(), "Khách hàng yêu cầu trả hàng", userId);
 
             await _unitOfWork.SaveChangesAsync();
             return true;
@@ -258,7 +259,7 @@ namespace HyperCar.BLL.Services
             _unitOfWork.Orders.Update(order);
 
             await AddTransactionHistoryAsync(orderId, oldStatus.ToString(),
-                OrderStatus.Cancelled.ToString(), "Order cancelled by customer", userId);
+                OrderStatus.Cancelled.ToString(), "Đơn hàng bị hủy bởi khách hàng", userId);
 
             await _unitOfWork.SaveChangesAsync();
             return true;

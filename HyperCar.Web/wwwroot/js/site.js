@@ -278,9 +278,15 @@
         });
     }
 
+    const _statusVi = {
+        'Pending': 'Chờ xác nhận', 'Confirmed': 'Đã xác nhận', 'Processing': 'Đang xử lý',
+        'Shipping': 'Đang giao', 'Delivered': 'Đã giao', 'Completed': 'Hoàn thành',
+        'Cancelled': 'Đã hủy', 'Refunded': 'Đã hoàn tiền'
+    };
+
     // Both roles can receive these (SignalR targets specific user via Clients.User)
     connection.on("ReceiveOrderUpdate", (orderId, status, message) => {
-        showToast(`Đơn hàng #${orderId} — ${status}`, message, 'info');
+        showToast(`Đơn hàng #${orderId} — ${_statusVi[status] || status}`, message, 'info');
     });
 
     connection.on("ReceivePaymentConfirmation", (orderId, status) => {
@@ -289,8 +295,9 @@
     });
 
     connection.on("ReceiveShippingUpdate", (orderId, status, trackingCode) => {
-        if (isCustomer) addNotification(`Đơn hàng #${orderId}: ${status}${trackingCode ? ' — ' + trackingCode : ''}`, 'shipping');
-        showToast('Cập nhật vận chuyển', `Đơn hàng #${orderId}: ${status}`, 'info');
+        const viStatus = _statusVi[status] || status;
+        if (isCustomer) addNotification(`Đơn hàng #${orderId}: ${viStatus}${trackingCode ? ' — ' + trackingCode : ''}`, 'shipping');
+        showToast('Cập nhật vận chuyển', `Đơn hàng #${orderId}: ${viStatus}`, 'info');
     });
 
     // Collection update — broadcast to all clients (public page)

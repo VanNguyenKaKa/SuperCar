@@ -147,7 +147,7 @@
 
                 // 3. Button success state
                 setTimeout(() => {
-                    btn.innerHTML = '<i class="fas fa-check me-1"></i>Added!';
+                    btn.innerHTML = '<i class="fas fa-check me-1"></i>Đã thêm!';
                     btn.classList.add('added');
                     btn.classList.remove('adding');
                 }, 600);
@@ -169,7 +169,7 @@
             btn.innerHTML = originalHTML;
             btn.classList.remove('adding');
             if (window.showToast) {
-                showToast('Error', 'Failed to add item to cart. Please try again.', 'danger');
+                showToast('Lỗi', 'Không thể thêm vào giỏ hàng. Vui lòng thử lại.', 'danger');
             }
         }
     });
@@ -278,7 +278,7 @@
         toast.innerHTML = `
             <span class="toast-icon"><i class="fas fa-check-circle"></i></span>
             <div class="toast-body">
-                <h6>Added to Cart!</h6>
+                <h6>Đã thêm vào giỏ!</h6>
                 <p>${carName}</p>
             </div>
         `;

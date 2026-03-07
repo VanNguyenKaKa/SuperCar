@@ -1,5 +1,25 @@
+# Visual Studio
 .vs/
-bin/
-obj/
 *.user
 *.suo
+
+# Build folders
+bin/
+obj/
+
+# Rider / VSCode
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# User secrets
+secrets.json
+
+# App settings for development
+appsettings.Development.json
+
+# OS files
+.DS_Store
+Thumbs.db

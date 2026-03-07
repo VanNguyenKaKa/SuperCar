@@ -1,8 +1,12 @@
 // ===== AI Chatbot Widget =====
 // Sends messages to /api/chat and displays responses with clickable product links
+// Chat history persists in sessionStorage across page navigations, clears on logout
 
 (function () {
     'use strict';
+
+    const STORAGE_KEY = 'hypercar_chat_history';
+    const WINDOW_KEY = 'hypercar_chat_open';
 
     const toggle = document.getElementById('chatToggle');
     const chatWindow = document.getElementById('chatWindow');
@@ -13,9 +17,17 @@
 
     if (!toggle) return;
 
+    // ── Restore history on page load ──
+    restoreHistory();
+    // Restore open/close state
+    if (sessionStorage.getItem(WINDOW_KEY) === 'open') {
+        chatWindow.style.display = 'flex';
+    }
+
     toggle.addEventListener('click', () => {
         const isVisible = chatWindow.style.display !== 'none';
         chatWindow.style.display = isVisible ? 'none' : 'flex';
+        sessionStorage.setItem(WINDOW_KEY, isVisible ? 'closed' : 'open');
         if (!isVisible) {
             input.focus();
             if (messages.children.length === 0) {
@@ -26,6 +38,7 @@
 
     closeBtn?.addEventListener('click', () => {
         chatWindow.style.display = 'none';
+        sessionStorage.setItem(WINDOW_KEY, 'closed');
     });
 
     sendBtn?.addEventListener('click', sendMessage);
@@ -76,6 +89,7 @@
         div.textContent = text;
         messages.appendChild(div);
         messages.scrollTop = messages.scrollHeight;
+        saveHistory();
     }
 
     function addAiMessage(text) {
@@ -84,7 +98,46 @@
         div.innerHTML = renderMarkdown(text);
         messages.appendChild(div);
         messages.scrollTop = messages.scrollHeight;
+        saveHistory();
         return div;
+    }
+
+    // ── Persistence ──
+
+    function saveHistory() {
+        const entries = [];
+        messages.querySelectorAll('.user-msg, .ai-msg:not(.typing-indicator)').forEach(el => {
+            entries.push({
+                type: el.classList.contains('user-msg') ? 'user' : 'ai',
+                // For user messages store text, for AI store raw HTML (already rendered markdown)
+                content: el.classList.contains('user-msg') ? el.textContent : el.innerHTML
+            });
+        });
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    }
+
+    function restoreHistory() {
+        const data = sessionStorage.getItem(STORAGE_KEY);
+        if (!data) return;
+        try {
+            const entries = JSON.parse(data);
+            if (!entries.length) return;
+            messages.innerHTML = ''; // clear before restore
+            entries.forEach(entry => {
+                const div = document.createElement('div');
+                if (entry.type === 'user') {
+                    div.className = 'user-msg';
+                    div.textContent = entry.content;
+                } else {
+                    div.className = 'ai-msg';
+                    div.innerHTML = entry.content;
+                }
+                messages.appendChild(div);
+            });
+            messages.scrollTop = messages.scrollHeight;
+        } catch (e) {
+            // Corrupt data — ignore
+        }
     }
 
     /**
@@ -126,11 +179,18 @@
     }
 
     function getSessionId() {
-        let sid = localStorage.getItem('hypercar_chat_session');
+        let sid = sessionStorage.getItem('hypercar_chat_session');
         if (!sid) {
             sid = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('hypercar_chat_session', sid);
+            sessionStorage.setItem('hypercar_chat_session', sid);
         }
         return sid;
     }
+
+    // ── Expose clear for logout ──
+    window.__clearChatHistory = function () {
+        sessionStorage.removeItem(STORAGE_KEY);
+        sessionStorage.removeItem(WINDOW_KEY);
+        sessionStorage.removeItem('hypercar_chat_session');
+    };
 })();

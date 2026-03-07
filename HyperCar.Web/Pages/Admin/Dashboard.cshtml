@@ -2,21 +2,21 @@
 @using System.Text.Json
 @model HyperCar.Web.Pages.Admin.DashboardModel
 @{
-    ViewData["Title"] = "Admin Dashboard";
+    ViewData["Title"] = "Quản trị";
     var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 }
 
 <section class="pt-5 mt-5">
     <div class="container-fluid py-4 px-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="section-title mb-0"><i class="fas fa-shield-alt me-2"></i>Admin <span class="text-accent">Dashboard</span></h2>
+            <h2 class="section-title mb-0"><i class="fas fa-shield-alt me-2"></i>Bảng <span class="text-accent">điều khiển</span></h2>
             <div class="d-flex gap-2">
-                <a href="/Admin/Statistics" class="btn btn-accent btn-sm"><i class="fas fa-chart-line me-1"></i>Statistics</a>
-                <a href="/Admin/Cars" class="btn btn-outline-accent btn-sm"><i class="fas fa-car me-1"></i>Cars</a>
-                <a href="/Admin/Brands" class="btn btn-outline-accent btn-sm"><i class="fas fa-tags me-1"></i>Brands</a>
-                <a href="/Admin/Orders" class="btn btn-outline-accent btn-sm"><i class="fas fa-box me-1"></i>Orders</a>
-                <a href="/Admin/Accounts" class="btn btn-outline-accent btn-sm"><i class="fas fa-users me-1"></i>Accounts</a>
-                <a href="/Admin/Roles" class="btn btn-outline-accent btn-sm"><i class="fas fa-user-shield me-1"></i>Roles</a>
+                <a href="/Admin/Statistics" class="btn btn-accent btn-sm"><i class="fas fa-chart-line me-1"></i>Thống kê</a>
+                <a href="/Admin/Cars" class="btn btn-outline-accent btn-sm"><i class="fas fa-car me-1"></i>Xe</a>
+                <a href="/Admin/Brands" class="btn btn-outline-accent btn-sm"><i class="fas fa-tags me-1"></i>Hãng</a>
+                <a href="/Admin/Orders" class="btn btn-outline-accent btn-sm"><i class="fas fa-box me-1"></i>Đơn hàng</a>
+                <a href="/Admin/Accounts" class="btn btn-outline-accent btn-sm"><i class="fas fa-users me-1"></i>Tài khoản</a>
+                <a href="/Admin/Roles" class="btn btn-outline-accent btn-sm"><i class="fas fa-user-shield me-1"></i>Vai trò</a>
             </div>
         </div>
 
@@ -25,7 +25,7 @@
             <div class="col-md-3">
                 <div class="stat-card" style="border-left: 4px solid #ff6b35;">
                     <div class="d-flex justify-content-between align-items-center">
-                        <div><h3 id="adminTotalOrders" class="mb-0 text-accent">@Model.Stats?.TotalOrders</h3><small class="text-muted">Total Orders</small></div>
+                        <div><h3 id="adminTotalOrders" class="mb-0 text-accent">@Model.Stats?.TotalOrders</h3><small class="text-muted">Tổng đơn hàng</small></div>
                         <i class="fas fa-shopping-bag fa-2x text-accent opacity-50"></i>
                     </div>
                 </div>
@@ -33,7 +33,7 @@
             <div class="col-md-3">
                 <div class="stat-card" style="border-left: 4px solid #198754;">
                     <div class="d-flex justify-content-between align-items-center">
-                        <div><h3 id="adminTotalRevenue" class="mb-0 text-success">$@(Model.Stats?.TotalRevenue.ToString("N0"))</h3><small class="text-muted">Total Revenue</small></div>
+                        <div><h3 id="adminTotalRevenue" class="mb-0 text-success">$@(Model.Stats?.TotalRevenue.ToString("N0"))</h3><small class="text-muted">Tổng doanh thu</small></div>
                         <i class="fas fa-dollar-sign fa-2x text-success opacity-50"></i>
                     </div>
                 </div>
@@ -41,7 +41,7 @@
             <div class="col-md-3">
                 <div class="stat-card" style="border-left: 4px solid #0dcaf0;">
                     <div class="d-flex justify-content-between align-items-center">
-                        <div><h3 id="adminTotalCars" class="mb-0 text-info">@Model.Stats?.TotalCars</h3><small class="text-muted">Active Cars</small></div>
+                        <div><h3 id="adminTotalCars" class="mb-0 text-info">@Model.Stats?.TotalCars</h3><small class="text-muted">Xe đang bán</small></div>
                         <i class="fas fa-car fa-2x text-info opacity-50"></i>
                     </div>
                 </div>
@@ -49,7 +49,7 @@
             <div class="col-md-3">
                 <div class="stat-card" style="border-left: 4px solid #ffc107;">
                     <div class="d-flex justify-content-between align-items-center">
-                        <div><h3 id="adminTotalCustomers" class="mb-0 text-warning">@Model.Stats?.TotalCustomers</h3><small class="text-muted">Customers</small></div>
+                        <div><h3 id="adminTotalCustomers" class="mb-0 text-warning">@Model.Stats?.TotalCustomers</h3><small class="text-muted">Khách hàng</small></div>
                         <i class="fas fa-users fa-2x text-warning opacity-50"></i>
                     </div>
                 </div>
@@ -58,10 +58,10 @@
 
         <!-- Quick Actions -->
         <div class="row g-4 mb-4">
-            <div class="col-md-2"><div class="stat-card text-center"><span class="badge bg-warning text-dark fs-5 mb-1">@Model.Stats?.PendingOrders</span><br /><small>Pending</small></div></div>
-            <div class="col-md-2"><div class="stat-card text-center"><span class="badge bg-success fs-5 mb-1">@Model.Stats?.CompletedOrders</span><br /><small>Completed</small></div></div>
-            <div class="col-md-2"><div class="stat-card text-center"><span class="badge bg-danger fs-5 mb-1">@Model.Stats?.CancelledOrders</span><br /><small>Cancelled</small></div></div>
-            <div class="col-md-6"><div class="stat-card"><div class="d-flex justify-content-between mb-1"><span>Payment Success</span><strong class="text-success">@(Model.Stats?.PaymentSuccessRate.ToString("F1"))%</strong></div><div class="progress" style="height:8px;"><div class="progress-bar bg-success" style="width:@(Model.Stats?.PaymentSuccessRate ?? 0)%"></div></div></div></div>
+            <div class="col-md-2"><div class="stat-card text-center"><span class="badge bg-warning text-dark fs-5 mb-1">@Model.Stats?.PendingOrders</span><br /><small>Chờ xử lý</small></div></div>
+            <div class="col-md-2"><div class="stat-card text-center"><span class="badge bg-success fs-5 mb-1">@Model.Stats?.CompletedOrders</span><br /><small>Hoàn thành</small></div></div>
+            <div class="col-md-2"><div class="stat-card text-center"><span class="badge bg-danger fs-5 mb-1">@Model.Stats?.CancelledOrders</span><br /><small>Đã hủy</small></div></div>
+            <div class="col-md-6"><div class="stat-card"><div class="d-flex justify-content-between mb-1"><span>Tỉ lệ thanh toán</span><strong class="text-success">@(Model.Stats?.PaymentSuccessRate.ToString("F1"))%</strong></div><div class="progress" style="height:8px;"><div class="progress-bar bg-success" style="width:@(Model.Stats?.PaymentSuccessRate ?? 0)%"></div></div></div></div>
         </div>
 
         <div class="row g-3">
@@ -69,8 +69,8 @@
             <div class="col-lg-5">
                 <div class="card bg-dark border-secondary h-100">
                     <div class="card-header border-secondary py-2 d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0"><i class="fas fa-chart-bar me-2 text-accent"></i>Revenue Overview</h6>
-                        <small class="text-muted">Monthly</small>
+                        <h6 class="mb-0"><i class="fas fa-chart-bar me-2 text-accent"></i>Tổng quan doanh thu</h6>
+                        <small class="text-muted">Hàng tháng</small>
                     </div>
                     <div class="card-body py-2" style="height:220px">
                         <canvas id="revenueChart"></canvas>
@@ -82,13 +82,13 @@
             <div class="col-lg-3">
                 <div class="card bg-dark border-secondary h-100">
                     <div class="card-header border-secondary py-2">
-                        <h6 class="mb-0"><i class="fas fa-chart-line me-2 text-accent"></i>Trend</h6>
+                        <h6 class="mb-0"><i class="fas fa-chart-line me-2 text-accent"></i>Xu hướng</h6>
                     </div>
                     <div class="card-body py-2 d-flex flex-column justify-content-center" style="height:220px">
                         <canvas id="sparklineChart"></canvas>
                         <div class="text-center mt-2">
                             <span class="text-accent fw-bold fs-5" id="trendTotal"></span>
-                            <br/><small class="text-muted">Total Revenue</small>
+                            <br/><small class="text-muted">Tổng doanh thu</small>
                         </div>
                     </div>
                 </div>
@@ -97,7 +97,7 @@
             <!-- Order Distribution (Polar Area) -->
             <div class="col-lg-4">
                 <div class="card bg-dark border-secondary h-100">
-                    <div class="card-header border-secondary py-2"><h6 class="mb-0"><i class="fas fa-chart-pie me-2 text-accent"></i>Order Distribution</h6></div>
+                    <div class="card-header border-secondary py-2"><h6 class="mb-0"><i class="fas fa-chart-pie me-2 text-accent"></i>Phân bố đơn hàng</h6></div>
                     <div class="card-body py-2" style="height:220px">
                         <canvas id="orderChart"></canvas>
                     </div>
@@ -107,13 +107,13 @@
             <!-- Top Selling Cars -->
             <div class="col-lg-6">
                 <div class="card bg-dark border-secondary">
-                    <div class="card-header border-secondary"><h5 class="mb-0"><i class="fas fa-trophy me-2 text-accent"></i>Top Selling Cars</h5></div>
+                    <div class="card-header border-secondary"><h5 class="mb-0"><i class="fas fa-trophy me-2 text-accent"></i>Xe bán chạy nhất</h5></div>
                     <div class="card-body p-0">
                         @if (Model.Stats?.TopSellingCars?.Any() == true)
                         {
                             <div class="table-responsive">
                                 <table class="table table-dark table-hover mb-0">
-                                    <thead><tr><th>#</th><th>Car</th><th>Sold</th><th>Revenue</th></tr></thead>
+                                    <thead><tr><th>#</th><th>Xe</th><th>Đã bán</th><th>Doanh thu</th></tr></thead>
                                     <tbody>
                                         @{ int rank = 1; }
                                         @foreach (var car in Model.Stats.TopSellingCars)
@@ -132,7 +132,7 @@
                         }
                         else
                         {
-                            <p class="text-muted p-3">No sales data yet.</p>
+                            <p class="text-muted p-3">Chưa có dữ liệu bán hàng.</p>
                         }
                     </div>
                 </div>
@@ -141,7 +141,7 @@
             <!-- Shipping Performance + Real-Time Notifications -->
             <div class="col-lg-6">
                 <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header border-secondary"><h5 class="mb-0"><i class="fas fa-truck me-2 text-accent"></i>Shipping Performance</h5></div>
+                    <div class="card-header border-secondary"><h5 class="mb-0"><i class="fas fa-truck me-2 text-accent"></i>Hiệu suất vận chuyển</h5></div>
                     <div class="card-body">
                         @if (Model.Stats?.ShippingPerformance != null)
                         {
@@ -159,11 +159,11 @@
                 <!-- Real-Time Notifications Panel -->
                 <div class="card bg-dark border-secondary">
                     <div class="card-header border-secondary">
-                        <h5 class="mb-0"><i class="fas fa-bell me-2 text-accent"></i>Live Notifications</h5>
+                        <h5 class="mb-0"><i class="fas fa-bell me-2 text-accent"></i>Thông báo trực tiếp</h5>
                     </div>
                     <div class="card-body" style="max-height: 200px; overflow-y: auto;">
                         <div id="adminNotifications">
-                            <p class="text-muted small" id="noNotifMsg">Listening for real-time updates...</p>
+                            <p class="text-muted small" id="noNotifMsg">Đang lắng nghe cập nhật thời gian thực...</p>
                         </div>
                     </div>
                 </div>
@@ -188,7 +188,7 @@
                 data: {
                     labels: revenueData.map(d => d.period),
                     datasets: [{
-                        label: 'Revenue',
+                        label: 'Doanh thu',
                         data: revenueData.map(d => d.totalRevenue),
                         backgroundColor: revenueData.map(d => {
                             const r = d.totalRevenue / (maxVal || 1);
@@ -217,7 +217,7 @@
                                 title: ctx => ctx[0].label,
                                 label: ctx => {
                                     const d = revenueData[ctx.dataIndex];
-                                    return [`💰 ${ctx.parsed.y.toLocaleString('vi-VN')}₫`, `📦 ${d.orderCount} orders`];
+                                    return [`💰 ${ctx.parsed.y.toLocaleString('vi-VN')}₫`, `📦 ${d.orderCount} đơn`];
                                 }
                             }
                         }
@@ -278,7 +278,13 @@
 
         // Order Distribution Chart
         if (orderData) {
-            const labels = Object.keys(orderData);
+            const statusViMap = {
+                'Pending': 'Chờ xác nhận', 'Confirmed': 'Đã xác nhận', 'Processing': 'Đang xử lý',
+                'Shipping': 'Đang giao', 'Delivered': 'Đã giao', 'Completed': 'Hoàn thành',
+                'Cancelled': 'Đã hủy', 'Refunded': 'Đã hoàn tiền'
+            };
+            const labelsEn = Object.keys(orderData);
+            const labels = labelsEn.map(l => statusViMap[l] || l);
             const values = Object.values(orderData);
             const colors = {
                 'Pending': '#ffc107', 'Confirmed': '#17a2b8', 'Processing': '#0dcaf0',
@@ -292,8 +298,8 @@
                     labels: labels,
                     datasets: [{
                         data: values,
-                        backgroundColor: labels.map(l => (colors[l] || '#ff6b35') + 'CC'),
-                        borderColor: labels.map(l => colors[l] || '#ff6b35'),
+                        backgroundColor: labelsEn.map(l => (colors[l] || '#ff6b35') + 'CC'),
+                        borderColor: labelsEn.map(l => colors[l] || '#ff6b35'),
                         borderWidth: 1
                     }]
                 },

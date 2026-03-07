@@ -1,35 +1,35 @@
 @page
 @model HyperCar.Web.Pages.Admin.OrdersModel
 @{
-    ViewData["Title"] = "Manage Orders";
+    ViewData["Title"] = "Quản lý đơn hàng";
 }
 
 <section class="pt-5 mt-5">
     <div class="container-fluid py-4 px-4">
-        <h2 class="section-title mb-4"><i class="fas fa-box me-2"></i>Manage <span class="text-accent">Orders</span></h2>
+        <h2 class="section-title mb-4"><i class="fas fa-box me-2"></i>Quản lý <span class="text-accent">Đơn hàng</span></h2>
 
         <!-- Status Filter -->
         <div class="d-flex gap-2 mb-4 flex-wrap">
-            <a href="/Admin/Orders" class="btn btn-sm @(string.IsNullOrEmpty(Model.StatusFilter) ? "btn-accent" : "btn-outline-secondary")">All</a>
-            <a href="/Admin/Orders?status=Pending" class="btn btn-sm @(Model.StatusFilter == "Pending" ? "btn-warning" : "btn-outline-warning")">Pending</a>
-            <a href="/Admin/Orders?status=Confirmed" class="btn btn-sm @(Model.StatusFilter == "Confirmed" ? "btn-info" : "btn-outline-info")">Confirmed</a>
-            <a href="/Admin/Orders?status=Shipping" class="btn btn-sm @(Model.StatusFilter == "Shipping" ? "btn-primary" : "btn-outline-primary")">Shipping</a>
-            <a href="/Admin/Orders?status=Delivered" class="btn btn-sm @(Model.StatusFilter == "Delivered" ? "btn-success" : "btn-outline-success")">Delivered</a>
-            <a href="/Admin/Orders?status=Completed" class="btn btn-sm @(Model.StatusFilter == "Completed" ? "btn-success" : "btn-outline-success")">Completed</a>
-            <a href="/Admin/Orders?status=Cancelled" class="btn btn-sm @(Model.StatusFilter == "Cancelled" ? "btn-danger" : "btn-outline-danger")">Cancelled</a>
+            <a href="?" class="btn btn-sm @(string.IsNullOrEmpty(Model.StatusFilter) ? "btn-accent" : "btn-outline-secondary")">Tất cả</a>
+            <a href="/Admin/Orders?status=Pending" class="btn btn-sm @(Model.StatusFilter == "Pending" ? "btn-warning" : "btn-outline-warning")">Đang chờ</a>
+            <a href="/Admin/Orders?status=Confirmed" class="btn btn-sm @(Model.StatusFilter == "Confirmed" ? "btn-info" : "btn-outline-info")">Đã xác nhận</a>
+            <a href="/Admin/Orders?status=Shipping" class="btn btn-sm @(Model.StatusFilter == "Shipping" ? "btn-primary" : "btn-outline-primary")">Đang giao</a>
+            <a href="/Admin/Orders?status=Delivered" class="btn btn-sm @(Model.StatusFilter == "Delivered" ? "btn-success" : "btn-outline-success")">Đã giao</a>
+            <a href="/Admin/Orders?status=Completed" class="btn btn-sm @(Model.StatusFilter == "Completed" ? "btn-success" : "btn-outline-success")">Hoàn thành</a>
+            <a href="/Admin/Orders?status=Cancelled" class="btn btn-sm @(Model.StatusFilter == "Cancelled" ? "btn-danger" : "btn-outline-danger")">Đã hủy</a>
         </div>
 
         <div class="table-responsive">
             <table class="table table-dark table-hover align-middle">
                 <thead>
                     <tr>
-                        <th>Order #</th>
-                        <th>Customer</th>
-                        <th>Total</th>
-                        <th>Items</th>
-                        <th>Status</th>
-                        <th>Date</th>
-                        <th>Actions</th>
+                        <th>Mã ĐH</th>
+                        <th>Khách hàng</th>
+                        <th>Tổng</th>
+                        <th>Sản phẩm</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày</th>
+                        <th>Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -55,13 +55,22 @@
                                 </td>
                                 <td class="text-accent">$@order.TotalAmount.ToString("N0")</td>
                                 <td>@order.Items?.Count</td>
-                                <td><span class="badge @badgeClass admin-order-badge" data-order-id="@order.Id">@order.StatusText</span></td>
+                                <td><span class="badge @badgeClass admin-order-badge" data-order-id="@order.Id">@order.StatusDisplayText</span></td>
                                 <td>@order.CreatedDate.ToString("MMM dd, yyyy")</td>
                                 <td>
                                     @{
                                         var isLocked = order.StatusText == "Completed" || order.StatusText == "Cancelled" || order.StatusText == "Refunded";
+                                        var nextStatuses = order.StatusText switch
+                                        {
+                                            "Pending" => new[] { ("Confirmed", "Đã xác nhận"), ("Cancelled", "Đã hủy") },
+                                            "Confirmed" => new[] { ("Processing", "Đang xử lý"), ("Cancelled", "Đã hủy") },
+                                            "Processing" => new[] { ("Shipping", "Đang giao"), ("Cancelled", "Đã hủy") },
+                                            "Shipping" => new[] { ("Delivered", "Đã giao"), ("Cancelled", "Đã hủy") },
+                                            "Delivered" => new[] { ("Completed", "Hoàn thành") },
+                                            _ => Array.Empty<(string, string)>()
+                                        };
                                     }
-                                    @if (isLocked)
+                                    @if (isLocked || !nextStatuses.Any())
                                     {
                                         <span class="badge bg-secondary"><i class="fas fa-lock me-1"></i>Đã khóa</span>
                                     }
@@ -69,21 +78,18 @@
                                     {
                                         <div class="dropdown">
                                             <button class="btn btn-sm btn-outline-accent dropdown-toggle" data-bs-toggle="dropdown">
-                                                Update Status
+                                                Cập nhật trạng thái
                                             </button>
                                             <ul class="dropdown-menu dropdown-menu-dark">
-                                                @foreach (var status in new[] { "Pending", "Confirmed", "Shipping", "Delivered", "Completed", "Cancelled" })
+                                                @foreach (var (val, label) in nextStatuses)
                                                 {
-                                                    @if (status != order.StatusText)
-                                                    {
-                                                        <li>
-                                                            <form method="post" asp-page-handler="UpdateStatus">
-                                                                <input type="hidden" name="orderId" value="@order.Id" />
-                                                                <input type="hidden" name="newStatus" value="@status" />
-                                                                <button type="submit" class="dropdown-item">@status</button>
-                                                            </form>
-                                                        </li>
-                                                    }
+                                                    <li>
+                                                        <form method="post" asp-page-handler="UpdateStatus">
+                                                            <input type="hidden" name="orderId" value="@order.Id" />
+                                                            <input type="hidden" name="newStatus" value="@val" />
+                                                            <button type="submit" class="dropdown-item">@label</button>
+                                                        </form>
+                                                    </li>
                                                 }
                                             </ul>
                                         </div>
@@ -94,7 +100,7 @@
                     }
                     else
                     {
-                        <tr><td colspan="7" class="text-center text-muted py-4">No orders found.</td></tr>
+                        <tr><td colspan="7" class="text-center text-muted py-4">Không tìm thấy đơn hàng nào.</td></tr>
                     }
                 </tbody>
             </table>

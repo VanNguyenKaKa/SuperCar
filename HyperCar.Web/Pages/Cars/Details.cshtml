@@ -1,7 +1,7 @@
 @page
 @model HyperCar.Web.Pages.Cars.DetailsModel
 @{
-    ViewData["Title"] = Model.Car?.Name ?? "Car Details";
+    ViewData["Title"] = Model.Car?.Name ?? "Chi tiết xe";
 }
 
 <section class="pt-5 mt-5">
@@ -23,13 +23,13 @@
                     <!-- Specs Grid -->
                     <div class="row g-3 mb-4">
                         <div class="col-6">
-                            <div class="spec-card"><i class="fas fa-horse-head text-accent"></i><h5>@Model.Car.HorsePower HP</h5><small>Horsepower</small></div>
+                            <div class="spec-card"><i class="fas fa-horse-head text-accent"></i><h5>@Model.Car.HorsePower HP</h5><small>Mã lực</small></div>
                         </div>
                         <div class="col-6">
-                            <div class="spec-card"><i class="fas fa-cog text-accent"></i><h5>@Model.Car.Engine</h5><small>Engine</small></div>
+                            <div class="spec-card"><i class="fas fa-cog text-accent"></i><h5>@Model.Car.Engine</h5><small>Động cơ</small></div>
                         </div>
                         <div class="col-6">
-                            <div class="spec-card"><i class="fas fa-tachometer-alt text-accent"></i><h5>@Model.Car.TopSpeed km/h</h5><small>Top Speed</small></div>
+                            <div class="spec-card"><i class="fas fa-tachometer-alt text-accent"></i><h5>@Model.Car.TopSpeed km/h</h5><small>Tốc độ tối đa</small></div>
                         </div>
                         <div class="col-6">
                             <div class="spec-card"><i class="fas fa-bolt text-accent"></i><h5>@Model.Car.Acceleration s</h5><small>0-100 km/h</small></div>
@@ -41,16 +41,16 @@
                     <div class="d-flex align-items-center gap-3 mt-4">
                         @if (Model.Car.Stock > 0)
                         {
-                            <span class="badge bg-success fs-6"><i class="fas fa-check me-1"></i>@Model.Car.Stock in stock</span>
+                            <span class="badge bg-success fs-6"><i class="fas fa-check me-1"></i>@Model.Car.Stock còn hàng</span>
                             <button class="btn btn-accent btn-lg add-to-cart-btn"
                                     data-car-id="@Model.Car.Id" data-car-name="@Model.Car.Name"
                                     data-car-image="@Model.Car.ImageUrl" data-car-price="@Model.Car.Price">
-                                <i class="fas fa-cart-plus me-2"></i>Add to Cart
+                                <i class="fas fa-cart-plus me-2"></i>Thêm vào giỏ
                             </button>
                         }
                         else
                         {
-                            <span class="badge bg-danger fs-6">Out of Stock</span>
+                            <span class="badge bg-danger fs-6">Hết hàng</span>
                         }
                     </div>
                 </div>
@@ -58,7 +58,7 @@
 
             <!-- Reviews -->
             <div class="mt-5">
-                <h3>Customer Reviews <span class="text-muted fs-6">(@Model.Reviews?.Count() ?? 0)</span></h3>
+                <h3>Đánh giá khách hàng <span class="text-muted fs-6">(@Model.Reviews?.Count() ?? 0)</span></h3>
                 <hr />
                 @if (Model.Reviews?.Any() == true)
                 {
@@ -81,13 +81,13 @@
                 }
                 else
                 {
-                    <p class="text-muted">No reviews yet. Be the first to review this car!</p>
+                    <p class="text-muted">Chưa có đánh giá. Hãy là người đầu tiên đánh giá xe này!</p>
                 }
             </div>
         }
         else
         {
-            <div class="text-center py-5"><h3>Car not found</h3></div>
+            <div class="text-center py-5"><h3>Không tìm thấy xe</h3></div>
         }
     </div>
 </section>
