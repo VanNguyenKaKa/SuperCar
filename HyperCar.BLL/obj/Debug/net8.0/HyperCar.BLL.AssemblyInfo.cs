@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HyperCar.BLL")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+faba3b47371c04da681058c44b5b2e18cbfaa856")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+17eac6ba4a16cda09315c9f56b15c3b3422dece2")]
 [assembly: System.Reflection.AssemblyProductAttribute("HyperCar.BLL")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HyperCar.BLL")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
