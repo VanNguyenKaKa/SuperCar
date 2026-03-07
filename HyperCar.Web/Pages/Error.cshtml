@@ -1,0 +1,18 @@
+﻿@page
+@model HyperCar.Web.Pages.ErrorModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<section class="pt-5 mt-5">
+    <div class="container py-5 text-center">
+        <i class="fas fa-exclamation-triangle fa-5x text-warning mb-4"></i>
+        <h1 class="display-4">Oops!</h1>
+        <p class="lead text-muted">An error occurred while processing your request.</p>
+        @if (Model.ShowRequestId)
+        {
+            <p class="text-muted"><strong>Request ID:</strong> <code>@Model.RequestId</code></p>
+        }
+        <a href="/" class="btn btn-accent btn-lg mt-3"><i class="fas fa-home me-2"></i>Back to Home</a>
+    </div>
+</section>

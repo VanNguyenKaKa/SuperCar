@@ -1,0 +1,413 @@
+@page
+@using System.Text.Json
+@model HyperCar.Web.Pages.Admin.DashboardModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+}
+
+<section class="pt-5 mt-5">
+    <div class="container-fluid py-4 px-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="section-title mb-0"><i class="fas fa-shield-alt me-2"></i>Admin <span class="text-accent">Dashboard</span></h2>
+            <div class="d-flex gap-2">
+                <a href="/Admin/Statistics" class="btn btn-accent btn-sm"><i class="fas fa-chart-line me-1"></i>Statistics</a>
+                <a href="/Admin/Cars" class="btn btn-outline-accent btn-sm"><i class="fas fa-car me-1"></i>Cars</a>
+                <a href="/Admin/Brands" class="btn btn-outline-accent btn-sm"><i class="fas fa-tags me-1"></i>Brands</a>
+                <a href="/Admin/Orders" class="btn btn-outline-accent btn-sm"><i class="fas fa-box me-1"></i>Orders</a>
+                <a href="/Admin/Accounts" class="btn btn-outline-accent btn-sm"><i class="fas fa-users me-1"></i>Accounts</a>
+                <a href="/Admin/Roles" class="btn btn-outline-accent btn-sm"><i class="fas fa-user-shield me-1"></i>Roles</a>
+            </div>
+        </div>
+
+        <!-- KPI Stats -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="stat-card" style="border-left: 4px solid #ff6b35;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><h3 id="adminTotalOrders" class="mb-0 text-accent">@Model.Stats?.TotalOrders</h3><small class="text-muted">Total Orders</small></div>
+                        <i class="fas fa-shopping-bag fa-2x text-accent opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="border-left: 4px solid #198754;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><h3 id="adminTotalRevenue" class="mb-0 text-success">$@(Model.Stats?.TotalRevenue.ToString("N0"))</h3><small class="text-muted">Total Revenue</small></div>
+                        <i class="fas fa-dollar-sign fa-2x text-success opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="border-left: 4px solid #0dcaf0;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><h3 id="adminTotalCars" class="mb-0 text-info">@Model.Stats?.TotalCars</h3><small class="text-muted">Active Cars</small></div>
+                        <i class="fas fa-car fa-2x text-info opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="border-left: 4px solid #ffc107;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><h3 id="adminTotalCustomers" class="mb-0 text-warning">@Model.Stats?.TotalCustomers</h3><small class="text-muted">Customers</small></div>
+                        <i class="fas fa-users fa-2x text-warning opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-2"><div class="stat-card text-center"><span class="badge bg-warning text-dark fs-5 mb-1">@Model.Stats?.PendingOrders</span><br /><small>Pending</small></div></div>
+            <div class="col-md-2"><div class="stat-card text-center"><span class="badge bg-success fs-5 mb-1">@Model.Stats?.CompletedOrders</span><br /><small>Completed</small></div></div>
+            <div class="col-md-2"><div class="stat-card text-center"><span class="badge bg-danger fs-5 mb-1">@Model.Stats?.CancelledOrders</span><br /><small>Cancelled</small></div></div>
+            <div class="col-md-6"><div class="stat-card"><div class="d-flex justify-content-between mb-1"><span>Payment Success</span><strong class="text-success">@(Model.Stats?.PaymentSuccessRate.ToString("F1"))%</strong></div><div class="progress" style="height:8px;"><div class="progress-bar bg-success" style="width:@(Model.Stats?.PaymentSuccessRate ?? 0)%"></div></div></div></div>
+        </div>
+
+        <div class="row g-3">
+            <!-- Revenue Bar Chart -->
+            <div class="col-lg-5">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-header border-secondary py-2 d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0"><i class="fas fa-chart-bar me-2 text-accent"></i>Revenue Overview</h6>
+                        <small class="text-muted">Monthly</small>
+                    </div>
+                    <div class="card-body py-2" style="height:220px">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue Sparkline + KPI -->
+            <div class="col-lg-3">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-header border-secondary py-2">
+                        <h6 class="mb-0"><i class="fas fa-chart-line me-2 text-accent"></i>Trend</h6>
+                    </div>
+                    <div class="card-body py-2 d-flex flex-column justify-content-center" style="height:220px">
+                        <canvas id="sparklineChart"></canvas>
+                        <div class="text-center mt-2">
+                            <span class="text-accent fw-bold fs-5" id="trendTotal"></span>
+                            <br/><small class="text-muted">Total Revenue</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Distribution (Polar Area) -->
+            <div class="col-lg-4">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-header border-secondary py-2"><h6 class="mb-0"><i class="fas fa-chart-pie me-2 text-accent"></i>Order Distribution</h6></div>
+                    <div class="card-body py-2" style="height:220px">
+                        <canvas id="orderChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Selling Cars -->
+            <div class="col-lg-6">
+                <div class="card bg-dark border-secondary">
+                    <div class="card-header border-secondary"><h5 class="mb-0"><i class="fas fa-trophy me-2 text-accent"></i>Top Selling Cars</h5></div>
+                    <div class="card-body p-0">
+                        @if (Model.Stats?.TopSellingCars?.Any() == true)
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover mb-0">
+                                    <thead><tr><th>#</th><th>Car</th><th>Sold</th><th>Revenue</th></tr></thead>
+                                    <tbody>
+                                        @{ int rank = 1; }
+                                        @foreach (var car in Model.Stats.TopSellingCars)
+                                        {
+                                            <tr>
+                                                <td><span class="badge bg-accent">@rank</span></td>
+                                                <td><strong>@car.CarName</strong><br /><small class="text-muted">@car.BrandName</small></td>
+                                                <td>@car.TotalSold</td>
+                                                <td class="text-accent">$@car.TotalRevenue.ToString("N0")</td>
+                                            </tr>
+                                            rank++;
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted p-3">No sales data yet.</p>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shipping Performance + Real-Time Notifications -->
+            <div class="col-lg-6">
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-header border-secondary"><h5 class="mb-0"><i class="fas fa-truck me-2 text-accent"></i>Shipping Performance</h5></div>
+                    <div class="card-body">
+                        @if (Model.Stats?.ShippingPerformance != null)
+                        {
+                            @foreach (var sp in Model.Stats.ShippingPerformance)
+                            {
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>@sp.Key</span>
+                                    <span class="badge bg-secondary">@sp.Value</span>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <!-- Real-Time Notifications Panel -->
+                <div class="card bg-dark border-secondary">
+                    <div class="card-header border-secondary">
+                        <h5 class="mb-0"><i class="fas fa-bell me-2 text-accent"></i>Live Notifications</h5>
+                    </div>
+                    <div class="card-body" style="max-height: 200px; overflow-y: auto;">
+                        <div id="adminNotifications">
+                            <p class="text-muted small" id="noNotifMsg">Listening for real-time updates...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        const revenueData = @Html.Raw(JsonSerializer.Serialize(Model.Stats?.RevenueByMonth, jsonOptions));
+        const orderData = @Html.Raw(JsonSerializer.Serialize(Model.Stats?.OrdersByStatus, jsonOptions));
+
+        // ========== Revenue Bar Chart (rounded, gradient bars) ==========
+        if (revenueData && revenueData.length > 0) {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            const maxVal = Math.max(...revenueData.map(d => d.totalRevenue));
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: revenueData.map(d => d.period),
+                    datasets: [{
+                        label: 'Revenue',
+                        data: revenueData.map(d => d.totalRevenue),
+                        backgroundColor: revenueData.map(d => {
+                            const r = d.totalRevenue / (maxVal || 1);
+                            return `rgba(255, 107, 53, ${0.35 + r * 0.65})`;
+                        }),
+                        borderColor: 'rgba(255, 107, 53, 0.8)',
+                        borderWidth: 1,
+                        borderRadius: { topLeft: 8, topRight: 8 },
+                        borderSkipped: 'bottom',
+                        barPercentage: 0.7,
+                        categoryPercentage: 0.8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(26,26,46,0.95)',
+                            borderColor: '#ff6b35', borderWidth: 1,
+                            titleColor: '#ff6b35', bodyColor: '#e0e0e0',
+                            padding: 10, cornerRadius: 6,
+                            displayColors: false,
+                            callbacks: {
+                                title: ctx => ctx[0].label,
+                                label: ctx => {
+                                    const d = revenueData[ctx.dataIndex];
+                                    return [`💰 ${ctx.parsed.y.toLocaleString('vi-VN')}₫`, `📦 ${d.orderCount} orders`];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#777', font: { size: 10 },
+                                callback: v => v >= 1e9 ? (v/1e9).toFixed(1)+'B' : v >= 1e6 ? (v/1e6).toFixed(0)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'K' : v
+                            },
+                            grid: { color: 'rgba(255,255,255,0.04)' }
+                        },
+                        x: {
+                            ticks: { color: '#999', font: { size: 9 } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // ========== Sparkline Trend ==========
+            const spCtx = document.getElementById('sparklineChart').getContext('2d');
+            const spGrad = spCtx.createLinearGradient(0, 0, 0, 80);
+            spGrad.addColorStop(0, 'rgba(255,107,53,0.4)');
+            spGrad.addColorStop(1, 'rgba(255,107,53,0)');
+
+            new Chart(spCtx, {
+                type: 'line',
+                data: {
+                    labels: revenueData.map(d => d.period),
+                    datasets: [{
+                        data: revenueData.map(d => d.totalRevenue),
+                        borderColor: '#ff6b35',
+                        backgroundColor: spGrad,
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                        pointHoverBackgroundColor: '#ff6b35'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    scales: {
+                        y: { display: false },
+                        x: { display: false }
+                    }
+                }
+            });
+
+            // Total KPI
+            const total = revenueData.reduce((s,d) => s + d.totalRevenue, 0);
+            const fmt = total >= 1e9 ? (total/1e9).toFixed(1)+'B₫' : total >= 1e6 ? (total/1e6).toFixed(1)+'M₫' : total.toLocaleString('vi-VN')+'₫';
+            document.getElementById('trendTotal').textContent = fmt;
+        }
+
+        // Order Distribution Chart
+        if (orderData) {
+            const labels = Object.keys(orderData);
+            const values = Object.values(orderData);
+            const colors = {
+                'Pending': '#ffc107', 'Confirmed': '#17a2b8', 'Processing': '#0dcaf0',
+                'Shipping': '#6610f2', 'Delivered': '#198754', 'Completed': '#20c997',
+                'Cancelled': '#dc3545', 'Refunded': '#6c757d'
+            };
+
+            new Chart(document.getElementById('orderChart'), {
+                type: 'polarArea',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: labels.map(l => (colors[l] || '#ff6b35') + 'CC'),
+                        borderColor: labels.map(l => colors[l] || '#ff6b35'),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { color: '#ccc', usePointStyle: true, padding: 8, font: { size: 10 } } },
+                        tooltip: {
+                            backgroundColor: 'rgba(26,26,46,0.95)',
+                            borderColor: '#ff6b35', borderWidth: 1,
+                            callbacks: {
+                                label: ctx => {
+                                    const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
+                                    const pct = total > 0 ? ((ctx.parsed.r/total)*100).toFixed(1) : 0;
+                                    return ` ${ctx.label}: ${ctx.parsed.r} (${pct}%)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            ticks: { display: false },
+                            grid: { color: 'rgba(255,255,255,0.06)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ========== Real-Time Dashboard Updates ==========
+        // Use the global SignalR connection from site.js (already connected)
+        // We listen for ReceiveAdminNotification to refresh data
+
+        // Refresh dashboard data via AJAX
+        async function refreshDashboardData() {
+            try {
+                const response = await fetch('/Admin/Dashboard?handler=Stats');
+                if (!response.ok) return;
+                const stats = await response.json();
+
+                // Update KPI cards
+                const updateEl = (id, value) => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = value;
+                };
+                updateEl('adminTotalOrders', stats.totalOrders);
+                updateEl('adminTotalRevenue', '$' + stats.totalRevenue.toLocaleString('en-US'));
+                updateEl('adminTotalCars', stats.totalCars);
+                updateEl('adminTotalCustomers', stats.totalCustomers);
+
+                // Update order status badges
+                const badges = document.querySelectorAll('.stat-card.text-center');
+                if (badges.length >= 3) {
+                    const pending = badges[0].querySelector('.badge');
+                    const completed = badges[1].querySelector('.badge');
+                    const cancelled = badges[2].querySelector('.badge');
+                    if (pending) pending.textContent = stats.pendingOrders;
+                    if (completed) completed.textContent = stats.completedOrders;
+                    if (cancelled) cancelled.textContent = stats.cancelledOrders;
+                }
+
+                // Update payment success rate
+                const progressBar = document.querySelector('.progress-bar');
+                const rateText = document.querySelector('.text-success strong, .stat-card .text-success');
+                if (progressBar) progressBar.style.width = stats.paymentSuccessRate.toFixed(1) + '%';
+
+                console.log('[Dashboard] Stats refreshed in real-time');
+            } catch (err) {
+                console.error('[Dashboard] Failed to refresh stats:', err);
+            }
+        }
+
+        // Register with global handler registry from site.js
+        window.__pageNotifHandlers = window.__pageNotifHandlers || [];
+        window.__pageNotifHandlers.push((message, type) => {
+            // Notification panel rendering
+            const noMsg = document.getElementById('noNotifMsg');
+            if (noMsg) noMsg.remove();
+
+            const colorMap = { payment: '#198754', order: '#0dcaf0', car: '#ff6b35', brand: '#ffc107', user: '#6610f2', role: '#dc3545' };
+            const iconMap = { payment: 'fa-dollar-sign', order: 'fa-box', car: 'fa-car', brand: 'fa-tags', user: 'fa-user', role: 'fa-shield-alt' };
+
+            const div = document.createElement('div');
+            div.className = 'alert alert-dark py-2 px-3 mb-2 d-flex align-items-center border-start border-3';
+            div.style.borderColor = colorMap[type] || '#ff6b35';
+            div.style.animation = 'slideIn 0.3s ease';
+            div.innerHTML = `<i class="fas ${iconMap[type] || 'fa-bell'} me-2" style="color:${colorMap[type] || '#ff6b35'}"></i><small>${message}</small><small class="ms-auto text-muted">${new Date().toLocaleTimeString()}</small>`;
+
+            document.getElementById('adminNotifications').prepend(div);
+
+            // Flash KPI + refresh data on order/payment events
+            if (type === 'order' || type === 'payment') {
+                ['adminTotalOrders', 'adminTotalRevenue'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        const card = el.closest('.stat-card');
+                        if (card) { card.style.animation = 'none'; card.offsetHeight; card.style.animation = 'kpiFlash 1s ease'; }
+                    }
+                });
+                refreshDashboardData();
+            }
+        });
+    </script>
+
+    <style>
+        @@keyframes kpiFlash {
+            0% { box-shadow: 0 0 0 rgba(255,107,53,0); }
+            30% { box-shadow: 0 0 20px rgba(255,107,53,0.4); }
+            100% { box-shadow: 0 0 0 rgba(255,107,53,0); }
+        }
+        @@keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+}

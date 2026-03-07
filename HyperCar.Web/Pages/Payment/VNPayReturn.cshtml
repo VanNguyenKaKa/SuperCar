@@ -1,0 +1,151 @@
+@page
+@model HyperCar.Web.Pages.Payment.VNPayReturnModel
+@{
+    ViewData["Title"] = Model.IsSuccess ? "Thanh toán thành công" : "Thanh toán thất bại";
+}
+
+<section class="pt-5 mt-5">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-7 col-lg-6">
+                @if (Model.IsSuccess)
+                {
+                    <div class="card bg-dark border-success text-center p-5" id="successCard">
+                        <!-- Animated checkmark -->
+                        <div class="success-checkmark mb-4">
+                            <div class="check-icon">
+                                <span class="icon-line line-tip"></span>
+                                <span class="icon-line line-long"></span>
+                                <div class="icon-circle"></div>
+                                <div class="icon-fix"></div>
+                            </div>
+                        </div>
+
+                        <h2 class="text-success mb-2">Thanh toán thành công!</h2>
+                        <p class="text-muted mb-4">Đơn hàng của bạn đã được xác nhận và đang được xử lý.</p>
+
+                        <div class="bg-dark border border-secondary rounded-3 p-3 mb-4 mx-auto" style="max-width: 320px;">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted small">Mã đơn hàng</span>
+                                <strong class="text-accent">#@Model.OrderId</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted small">Số tiền</span>
+                                <strong class="text-success">@Model.Amount.ToString("N0") ₫</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted small">Mã giao dịch</span>
+                                <strong class="small">@Model.TransactionRef</strong>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3 justify-content-center">
+                            <a href="/Account/OrderDetail?id=@Model.OrderId" class="btn btn-accent btn-lg">
+                                <i class="fas fa-eye me-2"></i>Xem đơn hàng
+                            </a>
+                            <a href="/Cars" class="btn btn-outline-light btn-lg">
+                                <i class="fas fa-shopping-bag me-2"></i>Tiếp tục mua
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Confetti particles -->
+                    <div id="confettiContainer" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9998;"></div>
+                }
+                else
+                {
+                    <div class="card bg-dark border-danger text-center p-5">
+                        <div class="mb-4">
+                            <div class="fail-x-mark">
+                                <i class="fas fa-times-circle text-danger" style="font-size: 5rem;"></i>
+                            </div>
+                        </div>
+
+                        <h2 class="text-danger mb-2">Thanh toán thất bại</h2>
+                        <p class="text-muted mb-2">Giao dịch không thể hoàn tất.</p>
+
+                        @{
+                            var errorMsg = Model.ResponseCode switch
+                            {
+                                "24" => "Khách hàng đã hủy giao dịch.",
+                                "51" => "Tài khoản không đủ số dư.",
+                                "65" => "Tài khoản đã vượt quá hạn mức giao dịch trong ngày.",
+                                "75" => "Ngân hàng thanh toán đang bảo trì.",
+                                "99" => "Lỗi không xác định từ ngân hàng.",
+                                _ => $"Mã lỗi: {Model.ResponseCode}"
+                            };
+                        }
+                        <div class="alert alert-danger bg-transparent border-danger mb-4">
+                            <i class="fas fa-exclamation-triangle me-2"></i>@errorMsg
+                        </div>
+
+                        <div class="d-flex gap-3 justify-content-center">
+                            <a href="/Cart" class="btn btn-accent btn-lg">
+                                <i class="fas fa-redo me-2"></i>Thử lại
+                            </a>
+                            <a href="/Account/Dashboard" class="btn btn-outline-light btn-lg">
+                                <i class="fas fa-list me-2"></i>Đơn hàng của tôi
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    @if (Model.IsSuccess)
+    {
+        <script>
+            // Simple confetti burst
+            (function () {
+                const container = document.getElementById('confettiContainer');
+                const colors = ['#ff6b35', '#ffd700', '#00ff88', '#ff4081', '#00bcd4', '#7c4dff'];
+                for (let i = 0; i < 80; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.style.cssText = `
+                        position: absolute;
+                        width: ${Math.random() * 10 + 5}px;
+                        height: ${Math.random() * 10 + 5}px;
+                        background: ${colors[Math.floor(Math.random() * colors.length)]};
+                        left: ${Math.random() * 100}%;
+                        top: -10px;
+                        border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+                        animation: confettiFall ${Math.random() * 2 + 2}s ease-in forwards;
+                        animation-delay: ${Math.random() * 0.5}s;
+                        opacity: 0.9;
+                    `;
+                    container.appendChild(confetti);
+                }
+                setTimeout(() => container.remove(), 5000);
+            })();
+        </script>
+        <style>
+            @@keyframes confettiFall {
+                0% { transform: translateY(0) rotateZ(0deg); opacity: 1; }
+                100% { transform: translateY(100vh) rotateZ(720deg); opacity: 0; }
+            }
+            .success-checkmark { display: flex; justify-content: center; }
+            .check-icon {
+                width: 80px; height: 80px; position: relative;
+                border-radius: 50%; box-sizing: content-box;
+                border: 4px solid #4caf50;
+            }
+            .check-icon::before {
+                content: ''; position: absolute; top: 3px; left: 24px;
+                width: 30px; height: 55px;
+                border-right: 4px solid #4caf50;
+                border-bottom: 4px solid #4caf50;
+                transform: rotate(45deg);
+                animation: checkmark 0.8s ease;
+                transform-origin: center;
+            }
+            @@keyframes checkmark {
+                0% { height: 0; width: 0; opacity: 0; }
+                40% { height: 0; width: 30px; opacity: 1; }
+                100% { height: 55px; width: 30px; opacity: 1; }
+            }
+        </style>
+    }
+}

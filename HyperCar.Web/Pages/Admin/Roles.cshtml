@@ -1,0 +1,93 @@
+@page
+@model HyperCar.Web.Pages.Admin.RolesModel
+@{
+    ViewData["Title"] = "Manage Roles";
+}
+
+<section class="pt-5 mt-5">
+    <div class="container-fluid py-4 px-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="section-title mb-0"><i class="fas fa-user-shield me-2"></i>Manage <span class="text-accent">Roles</span></h2>
+        </div>
+
+        <div class="row g-4">
+            <!-- Create Role -->
+            <div class="col-md-4">
+                <div class="card bg-dark border-secondary">
+                    <div class="card-header border-secondary"><h5 class="mb-0">Create New Role</h5></div>
+                    <div class="card-body">
+                        <form method="post" asp-page-handler="Create">
+                            <div class="mb-3">
+                                <label class="form-label">Role Name</label>
+                                <input name="NewRoleName" class="form-control bg-dark text-light border-secondary" placeholder="e.g. Manager" required />
+                            </div>
+                            <button type="submit" class="btn btn-accent w-100"><i class="fas fa-plus me-1"></i>Create Role</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role List -->
+            <div class="col-md-8">
+                <div class="card bg-dark border-secondary">
+                    <div class="card-header border-secondary"><h5 class="mb-0">All Roles</h5></div>
+                    <div class="card-body">
+                        @if (Model.Roles.Any())
+                        {
+                            <div class="row g-3">
+                                @foreach (var role in Model.Roles)
+                                {
+                                    <div class="col-md-6">
+                                        <div class="d-flex justify-content-between align-items-center p-3 rounded" style="background: rgba(255,255,255,0.05);">
+                                            <div>
+                                                <h6 class="mb-0">
+                                                    <i class="fas fa-shield-alt text-accent me-1"></i>@role.Name
+                                                </h6>
+                                                <small class="text-muted">@role.UserCount users</small>
+                                            </div>
+                                            @if (role.Name != "Admin" && role.Name != "Customer")
+                                            {
+                                                <form method="post" asp-page-handler="Delete" onsubmit="return confirm('Delete role @role.Name?')">
+                                                    <input type="hidden" name="roleId" value="@role.Id" />
+                                                    <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                                </form>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted">No roles found.</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        // Real-time: auto-reload roles on role events
+        async function reloadRolesContent() {
+            try {
+                const response = await fetch(window.location.href);
+                if (!response.ok) return;
+                const html = await response.text();
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const newGrid = doc.querySelector('.col-md-8 .card-body');
+                const currentGrid = document.querySelector('.col-md-8 .card-body');
+                if (newGrid && currentGrid) {
+                    currentGrid.innerHTML = newGrid.innerHTML;
+                }
+            } catch (e) { console.error('[Roles] Refresh error:', e); }
+        }
+
+        window.__pageNotifHandlers = window.__pageNotifHandlers || [];
+        window.__pageNotifHandlers.push(function(message, type) {
+            if (type === 'role') setTimeout(reloadRolesContent, 500);
+        });
+    </script>
+}

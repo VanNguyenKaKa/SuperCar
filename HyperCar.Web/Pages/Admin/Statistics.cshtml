@@ -1,0 +1,477 @@
+@page
+@using System.Text.Json
+@model HyperCar.Web.Pages.Admin.StatisticsModel
+@{
+    ViewData["Title"] = "Thống kê doanh thu";
+    var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+}
+
+<section class="pt-5 mt-5">
+    <div class="container-fluid py-4 px-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="section-title mb-0"><i class="fas fa-chart-line me-2"></i>Thống kê <span class="text-accent">Doanh thu</span></h2>
+            <a href="/Admin/Dashboard" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i>Dashboard</a>
+        </div>
+
+        <!-- Mode Tabs -->
+        <ul class="nav nav-pills mb-4 stat-tabs" id="statTabs">
+            <li class="nav-item">
+                <a class="nav-link @(Model.Mode == "day" ? "active" : "")" href="?mode=day&from=@Model.DateFrom.ToString("yyyy-MM-dd")&to=@Model.DateTo.ToString("yyyy-MM-dd")">
+                    <i class="fas fa-calendar-day me-1"></i>Ngày
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(Model.Mode == "month" ? "active" : "")" href="?mode=month&year=@Model.Year">
+                    <i class="fas fa-calendar-alt me-1"></i>Tháng
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(Model.Mode == "quarter" ? "active" : "")" href="?mode=quarter&year=@Model.Year">
+                    <i class="fas fa-calendar me-1"></i>Quý
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(Model.Mode == "year" ? "active" : "")" href="?mode=year">
+                    <i class="fas fa-calendar-check me-1"></i>Năm
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(Model.Mode == "custom" ? "active" : "")" href="#" id="customTabLink">
+                    <i class="fas fa-sliders-h me-1"></i>Tùy chọn
+                </a>
+            </li>
+        </ul>
+
+        <!-- Filter Bar -->
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-body py-3">
+                <form method="get" class="d-flex flex-wrap align-items-end gap-3" id="filterForm">
+                    <input type="hidden" name="mode" value="@Model.Mode" id="modeInput" />
+
+                    @if (Model.Mode == "day" || Model.Mode == "custom")
+                    {
+                        <div>
+                            <label class="form-label small text-muted mb-1">Từ ngày</label>
+                            <input type="date" name="from" class="form-control form-control-sm bg-dark text-light border-secondary"
+                                   value="@Model.DateFrom.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div>
+                            <label class="form-label small text-muted mb-1">Đến ngày</label>
+                            <input type="date" name="to" class="form-control form-control-sm bg-dark text-light border-secondary"
+                                   value="@Model.DateTo.ToString("yyyy-MM-dd")" />
+                        </div>
+                    }
+                    else if (Model.Mode == "month" || Model.Mode == "quarter")
+                    {
+                        <div>
+                            <label class="form-label small text-muted mb-1">Năm</label>
+                            <select name="year" class="form-select form-select-sm bg-dark text-light border-secondary" style="width:120px">
+                                @for (int y = DateTime.Now.Year; y >= DateTime.Now.Year - 5; y--)
+                                {
+                                    <option value="@y" selected="@(y == Model.Year)">@y</option>
+                                }
+                            </select>
+                        </div>
+                    }
+
+                    <button type="submit" class="btn btn-accent btn-sm"><i class="fas fa-filter me-1"></i>Lọc</button>
+
+                    <!-- Export Excel -->
+                    <a href="?handler=Export&mode=@Model.Mode&year=@Model.Year&from=@Model.DateFrom.ToString("yyyy-MM-dd")&to=@Model.DateTo.ToString("yyyy-MM-dd")"
+                       class="btn btn-success btn-sm ms-auto">
+                        <i class="fas fa-file-excel me-1"></i>Xuất Excel
+                    </a>
+                </form>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="stat-card" style="border-left: 4px solid #ff6b35;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-0 text-accent">@Model.TotalRevenue.ToString("N0")₫</h4>
+                            <small class="text-muted">Tổng doanh thu</small>
+                        </div>
+                        <i class="fas fa-coins fa-2x text-accent opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="border-left: 4px solid #198754;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-0 text-success">@Model.TotalOrders</h4>
+                            <small class="text-muted">Tổng đơn hàng</small>
+                        </div>
+                        <i class="fas fa-box fa-2x text-success opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="border-left: 4px solid #0dcaf0;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-0 text-info">@Model.AvgOrderValue.ToString("N0")₫</h4>
+                            <small class="text-muted">Giá trị trung bình</small>
+                        </div>
+                        <i class="fas fa-chart-bar fa-2x text-info opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="border-left: 4px solid #ffc107;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-0 text-warning">@Model.HighestRevenue.ToString("N0")₫</h4>
+                            <small class="text-muted">Cao nhất: @Model.HighestPeriod</small>
+                        </div>
+                        <i class="fas fa-trophy fa-2x text-warning opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row g-3 mb-4">
+            <!-- Revenue Area Chart (compact) -->
+            <div class="col-lg-5">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-header border-secondary py-2">
+                        <h6 class="mb-0"><i class="fas fa-chart-area me-2 text-accent"></i>Xu hướng doanh thu</h6>
+                    </div>
+                    <div class="card-body py-2">
+                        <canvas id="revenueChart" height="180"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue Comparison Bar (horizontal) -->
+            <div class="col-lg-4">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-header border-secondary py-2">
+                        <h6 class="mb-0"><i class="fas fa-chart-bar me-2 text-accent"></i>So sánh doanh thu</h6>
+                    </div>
+                    <div class="card-body py-2">
+                        <canvas id="revenueBarChart" height="180"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Distribution Pie -->
+            <div class="col-lg-3">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-header border-secondary py-2">
+                        <h6 class="mb-0"><i class="fas fa-chart-pie me-2 text-accent"></i>Phân bố đơn</h6>
+                    </div>
+                    <div class="card-body py-2">
+                        <canvas id="orderPieChart" height="180"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-8">
+                <div class="card bg-dark border-secondary">
+                    <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-table me-2 text-accent"></i>Chi tiết doanh thu</h5>
+                        <span class="badge bg-accent">@Model.RevenueData.Count kỳ</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover mb-0" id="revenueTable">
+                                <thead>
+                                    <tr>
+                                        <th class="cursor-pointer" onclick="sortTable(0)">Kỳ <i class="fas fa-sort ms-1 text-muted"></i></th>
+                                        <th class="cursor-pointer text-center" onclick="sortTable(1)">Đơn hàng <i class="fas fa-sort ms-1 text-muted"></i></th>
+                                        <th class="cursor-pointer text-end" onclick="sortTable(2)">Doanh thu <i class="fas fa-sort ms-1 text-muted"></i></th>
+                                        <th class="cursor-pointer text-end" onclick="sortTable(3)">TB/Đơn <i class="fas fa-sort ms-1 text-muted"></i></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model.RevenueData.Any())
+                                    {
+                                        @foreach (var item in Model.RevenueData)
+                                        {
+                                            <tr>
+                                                <td><strong>@item.Period</strong></td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-secondary">@item.OrderCount</span>
+                                                </td>
+                                                <td class="text-end text-accent fw-bold">@item.TotalRevenue.ToString("N0")₫</td>
+                                                <td class="text-end text-muted">@item.AverageOrderValue.ToString("N0")₫</td>
+                                            </tr>
+                                        }
+                                        <tr class="table-warning bg-opacity-10">
+                                            <td><strong>TỔNG</strong></td>
+                                            <td class="text-center"><strong>@Model.TotalOrders</strong></td>
+                                            <td class="text-end"><strong class="text-accent">@Model.TotalRevenue.ToString("N0")₫</strong></td>
+                                            <td class="text-end"><strong>@Model.AvgOrderValue.ToString("N0")₫</strong></td>
+                                        </tr>
+                                    }
+                                    else
+                                    {
+                                        <tr><td colspan="4" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>Không có dữ liệu trong kỳ này</td></tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Selling Cars -->
+            <div class="col-lg-4">
+                <div class="card bg-dark border-secondary">
+                    <div class="card-header border-secondary">
+                        <h5 class="mb-0"><i class="fas fa-trophy me-2 text-accent"></i>Top xe bán chạy</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        @if (Model.TopCars.Any())
+                        {
+                            <div class="list-group list-group-flush">
+                                @{ int rank = 1; }
+                                @foreach (var car in Model.TopCars)
+                                {
+                                    var rankColor = rank switch { 1 => "#ffd700", 2 => "#c0c0c0", 3 => "#cd7f32", _ => "#6c757d" };
+                                    <div class="list-group-item bg-dark border-secondary d-flex align-items-center gap-3">
+                                        <span class="badge rounded-circle d-flex align-items-center justify-content-center"
+                                              style="width:32px;height:32px;background:@rankColor;color:#000;font-weight:800;">@rank</span>
+                                        <div class="flex-grow-1">
+                                            <strong>@car.CarName</strong>
+                                            <br /><small class="text-muted">@car.BrandName</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge bg-accent">@car.TotalSold sold</span>
+                                            <br /><small class="text-accent">@car.TotalRevenue.ToString("N0")₫</small>
+                                        </div>
+                                    </div>
+                                    rank++;
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted p-3 text-center">Chưa có dữ liệu bán hàng</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .stat-tabs .nav-link {
+        color: #aaa;
+        border-radius: 8px;
+        padding: 8px 18px;
+        margin-right: 4px;
+        transition: all 0.3s;
+        border: 1px solid transparent;
+    }
+    .stat-tabs .nav-link:hover {
+        color: #ff6b35;
+        background: rgba(255,107,53,0.08);
+    }
+    .stat-tabs .nav-link.active {
+        background: linear-gradient(135deg, #ff6b35, #e05520);
+        color: #fff;
+        border-color: transparent;
+        box-shadow: 0 4px 15px rgba(255,107,53,0.4);
+    }
+    .cursor-pointer { cursor: pointer; }
+    .cursor-pointer:hover { color: #ff6b35 !important; }
+</style>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        // Data from server
+        const revenueData = @Html.Raw(JsonSerializer.Serialize(Model.RevenueData, jsonOptions));
+        const ordersByStatus = @Html.Raw(JsonSerializer.Serialize(Model.OrdersByStatus, jsonOptions));
+        const currentMode = '@Model.Mode';
+
+        // ========== Revenue Trend (Area Chart — compact) ==========
+        if (revenueData && revenueData.length > 0) {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 160);
+            gradient.addColorStop(0, 'rgba(255, 107, 53, 0.45)');
+            gradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: revenueData.map(d => d.period),
+                    datasets: [{
+                        label: 'Doanh thu',
+                        data: revenueData.map(d => d.totalRevenue),
+                        borderColor: '#ff6b35',
+                        backgroundColor: gradient,
+                        borderWidth: 2.5,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#ff6b35',
+                        pointBorderColor: '#1a1a2e',
+                        pointBorderWidth: 2,
+                        pointRadius: 3,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(26,26,46,0.95)', borderColor: '#ff6b35', borderWidth: 1,
+                            titleColor: '#ff6b35', bodyColor: '#e0e0e0', padding: 10, cornerRadius: 6,
+                            callbacks: {
+                                label: ctx => ` ${ctx.parsed.y.toLocaleString('vi-VN')}₫`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#888', font: { size: 10 }, callback: v => v >= 1e9 ? (v/1e9).toFixed(1)+'B' : v >= 1e6 ? (v/1e6).toFixed(0)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'K' : v },
+                            grid: { color: 'rgba(255,255,255,0.04)' }
+                        },
+                        x: {
+                            ticks: { color: '#888', font: { size: 9 }, maxRotation: 45 },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        } else {
+            document.getElementById('revenueChart').parentElement.innerHTML =
+                '<div class="text-center text-muted py-4"><i class="fas fa-chart-area fa-2x mb-2 opacity-50"></i><p class="small">Không có dữ liệu</p></div>';
+        }
+
+        // ========== Revenue Comparison (Horizontal Bar) ==========
+        if (revenueData && revenueData.length > 0) {
+            const barCtx = document.getElementById('revenueBarChart').getContext('2d');
+            const maxRev = Math.max(...revenueData.map(d => d.totalRevenue));
+
+            new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: revenueData.map(d => d.period),
+                    datasets: [{
+                        label: 'Doanh thu',
+                        data: revenueData.map(d => d.totalRevenue),
+                        backgroundColor: revenueData.map(d => {
+                            const ratio = d.totalRevenue / (maxRev || 1);
+                            return `rgba(255, 107, 53, ${0.3 + ratio * 0.7})`;
+                        }),
+                        borderColor: '#ff6b35',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(26,26,46,0.95)', borderColor: '#ff6b35', borderWidth: 1,
+                            titleColor: '#ff6b35', bodyColor: '#e0e0e0', padding: 10, cornerRadius: 6,
+                            callbacks: {
+                                label: ctx => ` ${ctx.parsed.x.toLocaleString('vi-VN')}₫ (${revenueData[ctx.dataIndex].orderCount} đơn)`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#888', font: { size: 10 }, callback: v => v >= 1e6 ? (v/1e6).toFixed(0)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'K' : v },
+                            grid: { color: 'rgba(255,255,255,0.04)' }
+                        },
+                        y: {
+                            ticks: { color: '#ccc', font: { size: 10 } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ========== Order Distribution (Doughnut — compact) ==========
+        if (ordersByStatus) {
+            const labels = Object.keys(ordersByStatus);
+            const values = Object.values(ordersByStatus);
+            const statusColors = {
+                'Pending': '#ffc107', 'Confirmed': '#17a2b8', 'Processing': '#0dcaf0',
+                'Shipping': '#6610f2', 'Delivered': '#198754', 'Completed': '#20c997',
+                'Cancelled': '#dc3545', 'Refunded': '#6c757d'
+            };
+
+            new Chart(document.getElementById('orderPieChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: labels.map(l => statusColors[l] || '#ff6b35'),
+                        borderWidth: 0,
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#ccc', padding: 6, usePointStyle: true, font: { size: 10 } } },
+                        tooltip: {
+                            backgroundColor: 'rgba(26,26,46,0.95)', borderColor: '#ff6b35', borderWidth: 1,
+                            callbacks: {
+                                label: ctx => {
+                                    const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
+                                    const pct = total > 0 ? ((ctx.parsed/total)*100).toFixed(1) : 0;
+                                    return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ========== Custom Tab Link ==========
+        document.getElementById('customTabLink')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('modeInput').value = 'custom';
+            const url = new URL(window.location);
+            url.searchParams.set('mode', 'custom');
+            window.location.href = url.toString();
+        });
+
+        // ========== Table Sort ==========
+        let sortDirection = [1, 1, 1, 1];
+        function sortTable(colIndex) {
+            const table = document.getElementById('revenueTable');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr')).filter(r => !r.classList.contains('table-warning'));
+            const totalRow = tbody.querySelector('tr.table-warning');
+
+            sortDirection[colIndex] *= -1;
+
+            rows.sort((a, b) => {
+                let aVal = a.cells[colIndex].textContent.trim().replace(/[₫,]/g, '');
+                let bVal = b.cells[colIndex].textContent.trim().replace(/[₫,]/g, '');
+                const aNum = parseFloat(aVal), bNum = parseFloat(bVal);
+                if (!isNaN(aNum) && !isNaN(bNum)) return (aNum - bNum) * sortDirection[colIndex];
+                return aVal.localeCompare(bVal) * sortDirection[colIndex];
+            });
+
+            rows.forEach(r => tbody.appendChild(r));
+            if (totalRow) tbody.appendChild(totalRow);
+        }
+    </script>
+}

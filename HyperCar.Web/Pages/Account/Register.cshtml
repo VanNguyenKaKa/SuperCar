@@ -1,0 +1,53 @@
+@page
+@model HyperCar.Web.Pages.Account.RegisterModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+<section class="pt-5 mt-5">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-5">
+                <div class="card bg-dark border-secondary">
+                    <div class="card-body p-4">
+                        <h3 class="text-center mb-4"><i class="fas fa-user-plus text-accent me-2"></i>Create Account</h3>
+                        @if (Model.Errors?.Any() == true)
+                        {
+                            <div class="alert alert-danger">
+                                @foreach (var error in Model.Errors) { <p class="mb-0">@error</p> }
+                            </div>
+                        }
+                        <form method="post">
+                            <div class="mb-3">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" name="FullName" class="form-control" required value="@Model.FullName" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" name="Email" class="form-control" required value="@Model.Email" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Phone</label>
+                                <input type="text" name="Phone" class="form-control" value="@Model.Phone" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Password</label>
+                                <input type="password" name="Password" class="form-control" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Confirm Password</label>
+                                <input type="password" name="ConfirmPassword" class="form-control" required />
+                            </div>
+                            <button type="submit" class="btn btn-accent w-100 btn-lg">
+                                <i class="fas fa-user-plus me-2"></i>Register
+                            </button>
+                        </form>
+                        <p class="text-center mt-3 mb-0">
+                            Already have an account? <a href="/Account/Login" class="text-accent">Sign in</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

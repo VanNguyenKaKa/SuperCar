@@ -1,0 +1,97 @@
+@page
+@model HyperCar.Web.Pages.Cars.DetailsModel
+@{
+    ViewData["Title"] = Model.Car?.Name ?? "Car Details";
+}
+
+<section class="pt-5 mt-5">
+    <div class="container py-4">
+        @if (Model.Car != null)
+        {
+            <div class="row g-5">
+                <div class="col-lg-6">
+                    <div class="car-detail-img">
+                        <img src="@(Model.Car.ImageUrl ?? "/images/car-placeholder.jpg")" alt="@Model.Car.Name" class="img-fluid rounded-3" />
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <span class="badge bg-accent mb-2">@Model.Car.Category</span>
+                    <h1 class="fw-bold">@Model.Car.Name</h1>
+                    <h4 class="text-muted mb-3">@Model.Car.BrandName</h4>
+                    <h2 class="text-accent mb-4">$@Model.Car.Price.ToString("N0")</h2>
+
+                    <!-- Specs Grid -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <div class="spec-card"><i class="fas fa-horse-head text-accent"></i><h5>@Model.Car.HorsePower HP</h5><small>Horsepower</small></div>
+                        </div>
+                        <div class="col-6">
+                            <div class="spec-card"><i class="fas fa-cog text-accent"></i><h5>@Model.Car.Engine</h5><small>Engine</small></div>
+                        </div>
+                        <div class="col-6">
+                            <div class="spec-card"><i class="fas fa-tachometer-alt text-accent"></i><h5>@Model.Car.TopSpeed km/h</h5><small>Top Speed</small></div>
+                        </div>
+                        <div class="col-6">
+                            <div class="spec-card"><i class="fas fa-bolt text-accent"></i><h5>@Model.Car.Acceleration s</h5><small>0-100 km/h</small></div>
+                        </div>
+                    </div>
+
+                    <p>@Model.Car.Description</p>
+
+                    <div class="d-flex align-items-center gap-3 mt-4">
+                        @if (Model.Car.Stock > 0)
+                        {
+                            <span class="badge bg-success fs-6"><i class="fas fa-check me-1"></i>@Model.Car.Stock in stock</span>
+                            <button class="btn btn-accent btn-lg add-to-cart-btn"
+                                    data-car-id="@Model.Car.Id" data-car-name="@Model.Car.Name"
+                                    data-car-image="@Model.Car.ImageUrl" data-car-price="@Model.Car.Price">
+                                <i class="fas fa-cart-plus me-2"></i>Add to Cart
+                            </button>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger fs-6">Out of Stock</span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reviews -->
+            <div class="mt-5">
+                <h3>Customer Reviews <span class="text-muted fs-6">(@Model.Reviews?.Count() ?? 0)</span></h3>
+                <hr />
+                @if (Model.Reviews?.Any() == true)
+                {
+                    @foreach (var review in Model.Reviews)
+                    {
+                        <div class="review-card mb-3">
+                            <div class="d-flex justify-content-between">
+                                <strong>@review.UserName</strong>
+                                <span class="text-muted">@review.CreatedDate.ToString("MMM dd, yyyy")</span>
+                            </div>
+                            <div class="star-rating mb-1">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <i class="fas fa-star @(i <= review.Rating ? "text-warning" : "text-muted")"></i>
+                                }
+                            </div>
+                            <p class="mb-0">@review.Comment</p>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted">No reviews yet. Be the first to review this car!</p>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5"><h3>Car not found</h3></div>
+        }
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/js/cart.js"></script>
+}

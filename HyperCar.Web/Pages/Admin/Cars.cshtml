@@ -1,0 +1,274 @@
+@page
+@model HyperCar.Web.Pages.Admin.CarsModel
+@{
+    ViewData["Title"] = "Manage Cars";
+}
+
+<section class="pt-5 mt-5">
+    <div class="container-fluid py-4 px-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="section-title mb-0"><i class="fas fa-car me-2"></i>Manage <span class="text-accent">Cars</span></h2>
+            <button class="btn btn-accent" data-bs-toggle="modal" data-bs-target="#carModal" onclick="resetForm()">
+                <i class="fas fa-plus me-1"></i>Add Car
+            </button>
+        </div>
+
+        <!-- Search -->
+        <form method="get" class="mb-4">
+            <div class="input-group" style="max-width: 400px;">
+                <input type="text" name="search" class="form-control bg-dark text-light border-secondary" placeholder="Search cars..." value="@Request.Query["search"]" />
+                <button class="btn btn-outline-accent" type="submit"><i class="fas fa-search"></i></button>
+            </div>
+        </form>
+
+        <!-- Cars Table -->
+        <div class="table-responsive">
+            <table class="table table-dark table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Name</th>
+                        <th>Brand</th>
+                        <th>Price</th>
+                        <th>HP</th>
+                        <th>Stock</th>
+                        <th>Category</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Cars?.Items?.Any() == true)
+                    {
+                        @foreach (var car in Model.Cars.Items)
+                        {
+                            <tr>
+                                <td><img src="@(car.ImageUrl ?? "/images/placeholder.jpg")" class="rounded" style="width:60px;height:40px;object-fit:cover;" alt="@car.Name" /></td>
+                                <td><strong>@car.Name</strong></td>
+                                <td>@car.BrandName</td>
+                                <td class="text-accent">$@car.Price.ToString("N0")</td>
+                                <td>@car.HorsePower HP</td>
+                                <td>
+                                    <span class="badge @(car.Stock > 0 ? "bg-success" : "bg-danger")">@car.Stock</span>
+                                </td>
+                                <td><span class="badge bg-secondary">@car.Category</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-warning me-1" onclick="editCar(@car.Id, '@car.Name.Replace("'","\\'")','@car.BrandId','@car.Price','@car.HorsePower','@car.Engine?.Replace("'","\\'")','@car.TopSpeed','@car.Acceleration','@car.Stock','@car.Description?.Replace("'","\\'").Replace("\n","")','@car.ImageUrl','@car.Category')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <form method="post" asp-page-handler="Delete" class="d-inline" onsubmit="return confirm('Delete this car?')">
+                                        <input type="hidden" name="id" value="@car.Id" />
+                                        <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr><td colspan="8" class="text-center text-muted py-4">No cars found.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        @if (Model.Cars?.TotalPages > 1)
+        {
+            <nav>
+                <ul class="pagination justify-content-center">
+                    @for (int i = 1; i <= Model.Cars.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.Cars.PageNumber ? "active" : "")">
+                            <a class="page-link" href="?page=@i&search=@Request.Query["search"]">@i</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    </div>
+</section>
+
+<!-- Car Modal -->
+<div class="modal fade" id="carModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content bg-dark border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title" id="carModalTitle"><i class="fas fa-car me-2"></i>Add Car</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="carForm" method="post" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" id="editIdField" name="EditId" />
+                    <input type="hidden" id="carImageUrl" name="CarInput.ImageUrl" />
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Name</label>
+                            <input name="CarInput.Name" id="carName" class="form-control bg-dark text-light border-secondary" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Brand</label>
+                            <select name="CarInput.BrandId" id="carBrand" class="form-select bg-dark text-light border-secondary" required>
+                                @if (Model.Brands != null)
+                                {
+                                    @foreach (var brand in Model.Brands)
+                                    {
+                                        <option value="@brand.Id">@brand.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Price ($)</label>
+                            <input type="number" name="CarInput.Price" id="carPrice" class="form-control bg-dark text-light border-secondary" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Horse Power</label>
+                            <input type="number" name="CarInput.HorsePower" id="carHP" class="form-control bg-dark text-light border-secondary" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Engine</label>
+                            <input name="CarInput.Engine" id="carEngine" class="form-control bg-dark text-light border-secondary" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Top Speed (km/h)</label>
+                            <input type="number" name="CarInput.TopSpeed" id="carTopSpeed" class="form-control bg-dark text-light border-secondary" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Acceleration (0-100)</label>
+                            <input type="number" step="0.1" name="CarInput.Acceleration" id="carAccel" class="form-control bg-dark text-light border-secondary" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Stock</label>
+                            <input type="number" name="CarInput.Stock" id="carStock" class="form-control bg-dark text-light border-secondary" required />
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label"><i class="fas fa-cloud-upload-alt me-1"></i>Car Image</label>
+                            <input type="file" name="CarImage" id="carImageFile" accept="image/*" class="form-control bg-dark text-light border-secondary" onchange="previewCarImage(this)" />
+                            <small class="text-muted">Upload image to Cloudinary. Leave empty to keep existing image when editing.</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Category</label>
+                            <input type="text" name="CarInput.Category" id="carCategory" list="categoryList"
+                                   class="form-control bg-dark text-light border-secondary"
+                                   placeholder="Chọn hoặc nhập category..." />
+                            <datalist id="categoryList">
+                                <option value="Hypercar"></option>
+                                <option value="Supercar"></option>
+                                <option value="Sports"></option>
+                                <option value="Electric"></option>
+                                <option value="Limited Edition"></option>
+                            </datalist>
+                        </div>
+                        <div class="col-12" id="carImagePreviewContainer" style="display:none;">
+                            <label class="form-label">Image Preview</label>
+                            <div>
+                                <img id="carImagePreview" class="rounded" style="max-width:200px;max-height:140px;object-fit:cover;" />
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <textarea name="CarInput.Description" id="carDesc" rows="3" class="form-control bg-dark text-light border-secondary"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-accent" id="carSubmitBtn">Create Car</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function resetForm() {
+            document.getElementById('carModalTitle').textContent = '➕ Add Car';
+            document.getElementById('carSubmitBtn').textContent = 'Create Car';
+            document.getElementById('carForm').setAttribute('asp-page-handler', 'Create');
+            document.getElementById('carForm').action = '?handler=Create';
+            document.getElementById('editIdField').value = '';
+            document.getElementById('carImageUrl').value = '';
+            document.getElementById('carName').value = '';
+            document.getElementById('carPrice').value = '';
+            document.getElementById('carHP').value = '';
+            document.getElementById('carEngine').value = '';
+            document.getElementById('carTopSpeed').value = '';
+            document.getElementById('carAccel').value = '';
+            document.getElementById('carStock').value = '';
+            document.getElementById('carImageFile').value = '';
+            document.getElementById('carDesc').value = '';
+            document.getElementById('carImagePreviewContainer').style.display = 'none';
+        }
+
+        function editCar(id, name, brandId, price, hp, engine, topSpeed, accel, stock, desc, image, category) {
+            document.getElementById('carModalTitle').textContent = '✏️ Edit Car';
+            document.getElementById('carSubmitBtn').textContent = 'Update Car';
+            document.getElementById('carForm').action = '?handler=Edit';
+            document.getElementById('editIdField').value = id;
+            document.getElementById('carImageUrl').value = image || '';
+            document.getElementById('carName').value = name;
+            document.getElementById('carBrand').value = brandId;
+            document.getElementById('carPrice').value = price;
+            document.getElementById('carHP').value = hp;
+            document.getElementById('carEngine').value = engine || '';
+            document.getElementById('carTopSpeed').value = topSpeed;
+            document.getElementById('carAccel').value = accel;
+            document.getElementById('carStock').value = stock;
+            document.getElementById('carImageFile').value = '';
+            document.getElementById('carDesc').value = desc || '';
+            document.getElementById('carCategory').value = category || 'Hypercar';
+            // Show existing image preview
+            if (image) {
+                document.getElementById('carImagePreview').src = image;
+                document.getElementById('carImagePreviewContainer').style.display = 'block';
+            } else {
+                document.getElementById('carImagePreviewContainer').style.display = 'none';
+            }
+            new bootstrap.Modal(document.getElementById('carModal')).show();
+        }
+
+        function previewCarImage(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById('carImagePreview').src = e.target.result;
+                    document.getElementById('carImagePreviewContainer').style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Real-time: auto-reload cars table on car/order/payment events (stock changes)
+        async function reloadCarsTable() {
+            try {
+                const response = await fetch(window.location.href);
+                if (!response.ok) return;
+                const html = await response.text();
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const newTbody = doc.querySelector('tbody');
+                const currentTbody = document.querySelector('tbody');
+                if (newTbody && currentTbody) {
+                    currentTbody.innerHTML = newTbody.innerHTML;
+                    currentTbody.style.animation = 'none';
+                    currentTbody.offsetHeight;
+                    currentTbody.style.animation = 'tableFlash 0.5s ease';
+                }
+            } catch (e) { console.error('[Cars] Refresh error:', e); }
+        }
+
+        window.__pageNotifHandlers = window.__pageNotifHandlers || [];
+        window.__pageNotifHandlers.push(function(message, type) {
+            if (['car', 'order', 'payment'].includes(type)) {
+                setTimeout(reloadCarsTable, 500);
+            }
+        });
+    </script>
+
+    <style>
+        @@keyframes tableFlash {
+            0% { background: rgba(255,107,53,0.1); }
+            100% { background: transparent; }
+        }
+    </style>
+}

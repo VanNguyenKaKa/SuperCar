@@ -1,0 +1,85 @@
+@page
+@model HyperCar.Web.Pages.Cart.IndexModel
+@{
+    ViewData["Title"] = "Shopping Cart";
+}
+
+<section class="pt-5 mt-5">
+    <div class="container py-4">
+        <h2 class="section-title mb-4"><i class="fas fa-shopping-cart me-2"></i>Shopping <span class="text-accent">Cart</span></h2>
+
+        @if (Model.Cart?.Items?.Any() == true)
+        {
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    @foreach (var item in Model.Cart.Items)
+                    {
+                        <div class="cart-item-card mb-3" data-car-id="@item.CarId">
+                            <div class="row align-items-center">
+                                <div class="col-md-2">
+                                    <img src="@(item.CarImage ?? "/images/car-placeholder.jpg")" alt="@item.CarName" class="img-fluid rounded" />
+                                </div>
+                                <div class="col-md-4">
+                                    <h5 class="mb-1">@item.CarName</h5>
+                                    <span class="text-accent">$@item.Price.ToString("N0")</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="input-group">
+                                        <button class="btn btn-outline-secondary qty-btn" data-action="decrease" data-car-id="@item.CarId">-</button>
+                                        <input type="number" class="form-control text-center qty-input" value="@item.Quantity" min="1" data-car-id="@item.CarId" />
+                                        <button class="btn btn-outline-secondary qty-btn" data-action="increase" data-car-id="@item.CarId">+</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 text-end">
+                                    <strong>$@item.Subtotal.ToString("N0")</strong>
+                                </div>
+                                <div class="col-md-1 text-end">
+                                    <button class="btn btn-outline-danger btn-sm remove-cart-btn" data-car-id="@item.CarId">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="col-lg-4">
+                    <div class="card bg-dark border-secondary">
+                        <div class="card-body">
+                            <h5 class="card-title">Order Summary</h5>
+                            <hr />
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Items (@Model.Cart.TotalItems)</span>
+                                <strong>$@Model.Cart.TotalAmount.ToString("N0")</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Shipping</span>
+                                <span class="text-muted">Calculated at checkout</span>
+                            </div>
+                            <hr />
+                            <div class="d-flex justify-content-between mb-3">
+                                <h5>Total</h5>
+                                <h5 class="text-accent">$@Model.Cart.TotalAmount.ToString("N0")</h5>
+                            </div>
+                            <a href="/Checkout" class="btn btn-accent w-100 btn-lg">
+                                <i class="fas fa-credit-card me-2"></i>Proceed to Checkout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="fas fa-shopping-cart fa-5x text-muted mb-3"></i>
+                <h3>Your cart is empty</h3>
+                <p class="text-muted">Browse our exclusive collection and find your dream hypercar.</p>
+                <a href="/Cars" class="btn btn-accent btn-lg mt-3">Explore Collection</a>
+            </div>
+        }
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/js/cart.js"></script>
+}

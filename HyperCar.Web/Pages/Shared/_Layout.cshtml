@@ -1,0 +1,177 @@
+﻿@using HyperCar.BLL.Interfaces
+@using Microsoft.AspNetCore.Antiforgery
+@inject IAuthService AuthService
+@inject IAntiforgery Antiforgery
+@{
+    var cartCount = Context.Session.GetString("HyperCarCart") != null ?
+        System.Text.Json.JsonSerializer.Deserialize<HyperCar.BLL.DTOs.CartDto>(Context.Session.GetString("HyperCarCart")!)?.TotalItems ?? 0 : 0;
+    var isSignedIn = AuthService.IsSignedIn(User);
+    var currentUser = isSignedIn ? await AuthService.GetCurrentUserAsync(User) : null;
+    var isAdmin = isSignedIn && AuthService.IsInRole(User, "Admin");
+    var tokenSet = Antiforgery.GetAndStoreTokens(Context);
+}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - HyperCar</title>
+    <meta name="description" content="HyperCar - The World's Most Exclusive Hypercar Marketplace" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body data-user-role="@(isAdmin ? "Admin" : (isSignedIn ? "Customer" : ""))">
+    <!-- Global AntiForgeryToken for AJAX calls -->
+    <input type="hidden" id="__AjaxAntiForgeryToken" name="@tokenSet.FormFieldName" value="@tokenSet.RequestToken" />
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top glass-nav">
+        <div class="container">
+            <a class="navbar-brand brand-logo" href="/">
+                <i class="fas fa-car-side me-2"></i>HYPER<span class="text-accent">CAR</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="/"><i class="fas fa-home me-1"></i>Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/Cars"><i class="fas fa-car me-1"></i>Collection</a></li>
+                </ul>
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <!-- Cart -->
+                    <li class="nav-item me-3">
+                        <a class="nav-link position-relative" href="/Cart">
+                            <i class="fas fa-shopping-cart fa-lg"></i>
+                            <span id="cartBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="@(cartCount == 0 ? "display:none;" : "")">
+                                @cartCount
+                            </span>
+                        </a>
+                    </li>
+
+                    @if (isSignedIn)
+                    {
+                        <!-- Notification Bell (Admin or Customer) -->
+                        <li class="nav-item dropdown me-3" id="bellContainer">
+                            <a class="nav-link position-relative" href="#" id="bellToggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                <i class="fas fa-bell fa-lg"></i>
+                                <span id="notifBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none;">
+                                    0
+                                </span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-dark dropdown-menu-end notification-dropdown" style="width: 380px; max-height: 480px; overflow: hidden;">
+                                <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom border-secondary">
+                                    <h6 class="mb-0"><i class="fas fa-bell me-1 text-accent"></i>@(isAdmin ? "Admin Notifications" : "Thông báo")</h6>
+                                    <button class="btn btn-sm btn-outline-secondary" id="clearAllNotifs" title="Clear All">
+                                        <i class="fas fa-trash-alt"></i> Xóa
+                                    </button>
+                                </div>
+                                <div id="notifList" style="max-height: 400px; overflow-y: auto;">
+                                    <div class="text-center text-muted py-4" id="notifEmpty">
+                                        <i class="fas fa-bell-slash fa-2x mb-2"></i>
+                                        <p class="mb-0 small">Chưa có thông báo</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    }
+
+                    @if (isSignedIn && currentUser != null)
+                    {
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle me-1"></i>@currentUser.FullName
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
+                                <li><a class="dropdown-item" href="/Account/Dashboard"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
+                                @if (isAdmin)
+                                {
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li><h6 class="dropdown-header text-accent"><i class="fas fa-shield-alt me-1"></i>Admin</h6></li>
+                                    <li><a class="dropdown-item" href="/Admin/Dashboard"><i class="fas fa-chart-line me-2"></i>Admin Dashboard</a></li>
+                                    <li><a class="dropdown-item" href="/Admin/Cars"><i class="fas fa-car me-2"></i>Manage Cars</a></li>
+                                    <li><a class="dropdown-item" href="/Admin/Brands"><i class="fas fa-tags me-2"></i>Manage Brands</a></li>
+                                    <li><a class="dropdown-item" href="/Admin/Orders"><i class="fas fa-box me-2"></i>Manage Orders</a></li>
+                                    <li><a class="dropdown-item" href="/Admin/Accounts"><i class="fas fa-users me-2"></i>Manage Accounts</a></li>
+                                    <li><a class="dropdown-item" href="/Admin/Roles"><i class="fas fa-user-shield me-2"></i>Manage Roles</a></li>
+                                }
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <form method="post" asp-page="/Account/Logout">
+                                        <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt me-2"></i>Logout</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item"><a class="nav-link" href="/Account/Login"><i class="fas fa-sign-in-alt me-1"></i>Login</a></li>
+                        <li class="nav-item"><a class="btn btn-accent btn-sm ms-2" href="/Account/Register">Register</a></li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Notification Toast Area -->
+    <div id="notificationArea" class="position-fixed top-0 end-0 p-3" style="z-index: 9999; margin-top: 80px;"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        @RenderBody()
+    </main>
+
+    <!-- AI Chatbot Widget -->
+    <div id="chatWidget" class="chat-widget">
+        <button id="chatToggle" class="chat-toggle-btn" title="AI Sales Assistant">
+            <i class="fas fa-robot fa-lg"></i>
+        </button>
+        <div id="chatWindow" class="chat-window" style="display:none;">
+            <div class="chat-header">
+                <i class="fas fa-robot me-2"></i>AI Sales Assistant
+                <button id="chatClose" class="btn-close btn-close-white float-end"></button>
+            </div>
+            <div id="chatMessages" class="chat-messages"></div>
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" class="form-control" placeholder="Ask about our hypercars..." />
+                <button id="chatSend" class="btn btn-accent"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5 class="brand-logo"><i class="fas fa-car-side me-2"></i>HYPER<span class="text-accent">CAR</span></h5>
+                    <p class="text-muted">The world's most exclusive hypercar marketplace. Experience automotive excellence.</p>
+                </div>
+                <div class="col-md-4">
+                    <h6>Quick Links</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="/Cars" class="text-muted">Collection</a></li>
+                        <li><a href="/Account/Dashboard" class="text-muted">My Orders</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h6>Contact</h6>
+                    <p class="text-muted mb-1"><i class="fas fa-envelope me-2"></i>sales@hypercar.vn</p>
+                    <p class="text-muted mb-1"><i class="fas fa-phone me-2"></i>+84 901 234 567</p>
+                </div>
+            </div>
+            <hr class="border-secondary" />
+            <p class="text-center text-muted mb-0">&copy; @DateTime.Now.Year HyperCar. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/chatbot.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

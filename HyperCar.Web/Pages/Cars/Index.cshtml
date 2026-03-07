@@ -1,0 +1,141 @@
+@page
+@model HyperCar.Web.Pages.Cars.IndexModel
+@{
+    ViewData["Title"] = "HyperCar Collection";
+}
+
+<section class="pt-5 mt-5">
+    <div class="container py-4">
+        <h2 class="section-title mb-4">Our <span class="text-accent">Collection</span></h2>
+
+        <!-- Filters -->
+        <form method="get" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <input type="text" name="searchTerm" class="form-control" placeholder="Search cars..." value="@Model.Filter.SearchTerm" />
+            </div>
+            <div class="col-md-2">
+                <select name="brandId" class="form-select">
+                    <option value="">All Brands</option>
+                    @foreach (var brand in Model.Brands ?? Enumerable.Empty<HyperCar.BLL.DTOs.BrandDto>())
+                    {
+                        <option value="@brand.Id" selected="@(Model.Filter.BrandId == brand.Id)">@brand.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="category" class="form-select">
+                    <option value="">All Categories</option>
+                    @foreach (var cat in Model.Categories ?? Enumerable.Empty<string>())
+                    {
+                        <option value="@cat" selected="@(Model.Filter.Category == cat)">@cat</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="sortBy" class="form-select">
+                    <option value="newest">Newest</option>
+                    <option value="price" selected="@(Model.Filter.SortBy == "price")">Price</option>
+                    <option value="horsepower" selected="@(Model.Filter.SortBy == "horsepower")">Power</option>
+                    <option value="topspeed" selected="@(Model.Filter.SortBy == "topspeed")">Speed</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-accent w-100"><i class="fas fa-search"></i></button>
+            </div>
+        </form>
+
+        <!-- Car Grid -->
+        <div class="row g-4">
+            @if (Model.Result?.Items != null)
+            {
+                @foreach (var car in Model.Result.Items)
+                {
+                    <div class="col-lg-3 col-md-6">
+                        <div class="car-card">
+                            <div class="car-card-img">
+                                <img src="@(car.ImageUrl ?? "/images/car-placeholder.jpg")" alt="@car.Name" />
+                                <div class="car-card-overlay">
+                                    <a href="/Cars/Details?id=@car.Id" class="btn btn-accent btn-sm">View Details</a>
+                                </div>
+                            </div>
+                            <div class="car-card-body">
+                                <span class="car-brand">@car.BrandName</span>
+                                <h5 class="car-name">@car.Name</h5>
+                                <div class="car-specs">
+                                    <span><i class="fas fa-horse-head"></i> @car.HorsePower HP</span>
+                                    <span><i class="fas fa-tachometer-alt"></i> @car.TopSpeed km/h</span>
+                                    <span><i class="fas fa-bolt"></i> @car.Acceleration s</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <span class="car-price">$@car.Price.ToString("N0")</span>
+                                    @if (car.Stock > 0)
+                                    {
+                                        <button class="btn btn-accent btn-sm add-to-cart-btn"
+                                                data-car-id="@car.Id" data-car-name="@car.Name"
+                                                data-car-image="@car.ImageUrl" data-car-price="@car.Price">
+                                            <i class="fas fa-cart-plus"></i>
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+
+        <!-- Pagination -->
+        @if (Model.Result?.TotalPages > 1)
+        {
+            <nav class="mt-5">
+                <ul class="pagination justify-content-center">
+                    @for (int i = 1; i <= Model.Result.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.Result.PageNumber ? "active" : "")">
+                            <a class="page-link" href="/Cars?page=@i&searchTerm=@Model.Filter.SearchTerm&brandId=@Model.Filter.BrandId&category=@Model.Filter.Category&sortBy=@Model.Filter.SortBy">@i</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/js/cart.js"></script>
+    <script>
+        // Real-time: auto-reload car grid when admin adds/edits/deletes cars
+        async function reloadCarGrid() {
+            try {
+                const response = await fetch(window.location.href);
+                if (!response.ok) return;
+                const html = await response.text();
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const newGrid = doc.querySelector('.row.g-4');
+                const currentGrid = document.querySelector('.row.g-4');
+                if (newGrid && currentGrid) {
+                    currentGrid.innerHTML = newGrid.innerHTML;
+                    currentGrid.style.animation = 'none';
+                    currentGrid.offsetHeight;
+                    currentGrid.style.animation = 'gridFlash 0.5s ease';
+                }
+                // Re-bind cart buttons after DOM replace
+                if (typeof initCartButtons === 'function') initCartButtons();
+            } catch (e) { console.error('[Collection] Refresh error:', e); }
+        }
+
+        window.__pageNotifHandlers = window.__pageNotifHandlers || [];
+        window.__pageNotifHandlers.push(function(message, type) {
+            if (type === 'car' || message === '__collection_update__') {
+                setTimeout(reloadCarGrid, 500);
+            }
+        });
+    </script>
+
+    <style>
+        @@keyframes gridFlash {
+            0% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+    </style>
+}

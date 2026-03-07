@@ -1,0 +1,118 @@
+﻿@page
+@using HyperCar.BLL.DTOs
+@model HyperCar.Web.Pages.IndexModel
+@{
+    ViewData["Title"] = "World's Most Exclusive Hypercars";
+}
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="container position-relative" style="z-index: 2;">
+        <div class="row align-items-center min-vh-100">
+            <div class="col-lg-7">
+                <h1 class="hero-title">Experience<br /><span class="text-accent">Automotive</span> Excellence</h1>
+                <p class="hero-subtitle">Discover the world's most exclusive hypercars. From Bugatti to Koenigsegg, your dream machine awaits.</p>
+                <a href="/Cars" class="btn btn-accent btn-lg me-3"><i class="fas fa-car me-2"></i>View Collection</a>
+                <a href="#featured" class="btn btn-outline-light btn-lg"><i class="fas fa-arrow-down me-2"></i>Explore</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Bar -->
+<section class="stats-bar py-4">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3">
+                <h2 class="text-accent fw-bold mb-0">@Model.TotalCars+</h2>
+                <small class="text-muted">Hypercars Available</small>
+            </div>
+            <div class="col-md-3">
+                <h2 class="text-accent fw-bold mb-0">@Model.Brands?.Count()+</h2>
+                <small class="text-muted">Premium Brands</small>
+            </div>
+            <div class="col-md-3">
+                <h2 class="text-accent fw-bold mb-0">2000+</h2>
+                <small class="text-muted">Horsepower Max</small>
+            </div>
+            <div class="col-md-3">
+                <h2 class="text-accent fw-bold mb-0">$600K+</h2>
+                <small class="text-muted">Starting From</small>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Cars -->
+<section id="featured" class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Featured <span class="text-accent">Collection</span></h2>
+            <p class="text-muted">Hand-picked masterpieces from the world's finest manufacturers</p>
+        </div>
+        <div class="row g-4">
+            @if (Model.FeaturedCars != null)
+            {
+                @foreach (var car in Model.FeaturedCars)
+                {
+                    <div class="col-lg-3 col-md-6">
+                        <div class="car-card">
+                            <div class="car-card-img">
+                                <img src="@(car.ImageUrl ?? "/images/car-placeholder.jpg")" alt="@car.Name" />
+                                <div class="car-card-overlay">
+                                    <a href="/Cars/Details?id=@car.Id" class="btn btn-accent btn-sm">View Details</a>
+                                </div>
+                            </div>
+                            <div class="car-card-body">
+                                <span class="car-brand">@car.BrandName</span>
+                                <h5 class="car-name">@car.Name</h5>
+                                <div class="car-specs">
+                                    <span><i class="fas fa-horse-head"></i> @car.HorsePower HP</span>
+                                    <span><i class="fas fa-tachometer-alt"></i> @car.TopSpeed km/h</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <span class="car-price">$@car.Price.ToString("N0")</span>
+                                    @if (car.Stock > 0)
+                                    {
+                                        <span class="badge bg-success"><i class="fas fa-check"></i> In Stock</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Sold Out</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+        <div class="text-center mt-5">
+            <a href="/Cars" class="btn btn-outline-accent btn-lg">View Full Collection <i class="fas fa-arrow-right ms-2"></i></a>
+        </div>
+    </div>
+</section>
+
+<!-- Brands Section -->
+<section class="py-5 bg-dark-subtle">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Premium <span class="text-accent">Brands</span></h2>
+        </div>
+        <div class="row g-4 justify-content-center">
+            @if (Model.Brands != null)
+            {
+                @foreach (var brand in Model.Brands)
+                {
+                    <div class="col-lg-3 col-md-4 col-6">
+                        <a href="/Cars?brandId=@brand.Id" class="brand-card text-decoration-none">
+                            <h5 class="mb-1">@brand.Name</h5>
+                            <small class="text-muted">@brand.Country · @brand.CarCount cars</small>
+                        </a>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</section>

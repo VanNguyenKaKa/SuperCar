@@ -1,0 +1,426 @@
+@page
+@model HyperCar.Web.Pages.Account.OrderDetailModel
+@{
+    ViewData["Title"] = $"Đơn hàng #{Model.Order?.Id}";
+}
+
+<section class="pt-5 mt-5">
+    <div class="container py-4">
+        @if (Model.Order == null)
+        {
+            <div class="text-center py-5">
+                <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                <h3>Không tìm thấy đơn hàng</h3>
+                <a href="/Account/Dashboard" class="btn btn-accent mt-3">Quay lại Dashboard</a>
+            </div>
+        }
+        else
+        {
+            var order = Model.Order;
+            var statusSteps = new[] { "Pending", "Confirmed", "Processing", "Shipping", "Delivered", "Completed" };
+            var currentStep = Array.IndexOf(statusSteps, order.StatusText);
+            if (order.StatusText == "Cancelled" || order.StatusText == "Refunded") currentStep = -1;
+
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <div>
+                    <a href="/Account/Dashboard" class="text-muted text-decoration-none small">
+                        <i class="fas fa-arrow-left me-1"></i>Quay lại Dashboard
+                    </a>
+                    <h2 class="section-title mt-2 mb-0">
+                        Đơn hàng <span class="text-accent">#@order.Id</span>
+                    </h2>
+                    <small class="text-muted">Đặt ngày @order.CreatedDate.ToString("dd/MM/yyyy HH:mm")</small>
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    @{
+                        var statusBadge = order.StatusText switch
+                        {
+                            "Completed" => "bg-success",
+                            "Cancelled" => "bg-danger",
+                            "Pending" => "bg-warning text-dark",
+                            "Confirmed" => "bg-info",
+                            "Shipping" => "bg-primary",
+                            "Delivered" => "bg-success",
+                            _ => "bg-secondary"
+                        };
+                    }
+                    <span id="orderStatusBadge" class="badge @statusBadge fs-6 px-3 py-2" data-order-id="@order.Id">
+                        <i class="fas fa-circle me-1" style="font-size: 0.5rem; vertical-align: middle;"></i>
+                        <span id="orderStatusText">@order.StatusText</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Progress Tracker -->
+            <div id="progressTracker" data-current-step="@currentStep" data-order-id="@order.Id">
+            @if (currentStep >= 0)
+            {
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-body py-4">
+                        <div class="d-flex justify-content-between position-relative px-4">
+                            <!-- Progress line -->
+                            <div class="position-absolute" style="top: 16px; left: 60px; right: 60px; height: 3px; background: rgba(255,255,255,0.1); z-index: 0;"></div>
+                            <div id="progressFill" class="position-absolute" style="top: 16px; left: 60px; height: 3px; background: #ff6b35; z-index: 1; transition: width 0.5s ease;
+                                width: calc((@currentStep / (@(statusSteps.Length - 1).0)) * (100% - 120px));">
+                            </div>
+
+                            @for (int i = 0; i < statusSteps.Length; i++)
+                            {
+                                var isActive = i <= currentStep;
+                                var isCurrent = i == currentStep;
+                                var stepIcons = new[] { "fa-clock", "fa-check", "fa-cog", "fa-truck", "fa-box-open", "fa-flag-checkered" };
+                                <div class="text-center position-relative step-dot" data-step="@i" style="z-index: 2;">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 step-circle"
+                                         style="width: 36px; height: 36px;
+                                            background: @(isActive ? "#ff6b35" : "rgba(255,255,255,0.1)");
+                                            @(isCurrent ? "box-shadow: 0 0 12px rgba(255,107,53,0.5);" : "")">
+                                        <i class="fas @stepIcons[i] @(isActive ? "text-white" : "text-muted")" style="font-size: 0.8rem;"></i>
+                                    </div>
+                                    <small class="step-label @(isActive ? "text-white" : "text-muted")" style="font-size: 0.7rem;">@statusSteps[i]</small>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            </div>
+
+            <div class="row g-4">
+                <!-- Left Column -->
+                <div class="col-lg-8">
+                    <!-- Order Items -->
+                    <div class="card bg-dark border-secondary mb-4">
+                        <div class="card-header border-secondary">
+                            <h5 class="mb-0"><i class="fas fa-box me-2 text-accent"></i>Sản phẩm (@order.Items.Count)</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            @foreach (var item in order.Items)
+                            {
+                                <div class="d-flex align-items-center p-3 border-bottom border-secondary">
+                                    @if (!string.IsNullOrEmpty(item.CarImage))
+                                    {
+                                        <img src="@item.CarImage" alt="" style="width: 80px; height: 55px; object-fit: cover; border-radius: 8px;" class="me-3" />
+                                    }
+                                    else
+                                    {
+                                        <div class="bg-secondary rounded d-flex align-items-center justify-content-center me-3" style="width: 80px; height: 55px;">
+                                            <i class="fas fa-car text-muted"></i>
+                                        </div>
+                                    }
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">@item.CarName</h6>
+                                        <small class="text-muted">Số lượng: @item.Quantity × @item.Price.ToString("N0") ₫</small>
+                                    </div>
+                                    <strong class="text-accent">@item.Subtotal.ToString("N0") ₫</strong>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Shipping Info -->
+                    <div class="card bg-dark border-secondary mb-4">
+                        <div class="card-header border-secondary">
+                            <h5 class="mb-0"><i class="fas fa-shipping-fast me-2 text-accent"></i>Thông tin giao hàng</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block">Người nhận</small>
+                                    <strong>@(order.ReceiverName ?? "—")</strong>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block">Số điện thoại</small>
+                                    <strong>@(order.ReceiverPhone ?? "—")</strong>
+                                </div>
+                                <div class="col-12">
+                                    <small class="text-muted d-block">Địa chỉ</small>
+                                    <strong>@(order.ShippingAddress ?? "—")</strong>
+                                </div>
+                                @if (order.Shipping != null)
+                                {
+                                    <div class="col-md-6">
+                                        <small class="text-muted d-block">Đơn vị vận chuyển</small>
+                                        <strong>@order.Shipping.Provider</strong>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(order.Shipping.TrackingCode))
+                                    {
+                                        <div class="col-md-6">
+                                            <small class="text-muted d-block">Mã vận đơn</small>
+                                            <strong class="text-accent">@order.Shipping.TrackingCode</strong>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timeline -->
+                    @if (Model.Timeline.Any())
+                    {
+                        <div class="card bg-dark border-secondary">
+                            <div class="card-header border-secondary">
+                                <h5 class="mb-0"><i class="fas fa-history me-2 text-accent"></i>Lịch sử đơn hàng</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="timeline-list">
+                                    @foreach (var entry in Model.Timeline.OrderByDescending(t => t.CreatedDate))
+                                    {
+                                        <div class="d-flex gap-3 mb-3 pb-3 border-bottom border-secondary">
+                                            <div class="text-center" style="min-width: 50px;">
+                                                <div class="rounded-circle bg-accent d-flex align-items-center justify-content-center mx-auto" style="width: 32px; height: 32px;">
+                                                    <i class="fas fa-circle text-white" style="font-size: 0.4rem;"></i>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex justify-content-between">
+                                                    <strong class="small">@entry.StatusFrom → @entry.StatusTo</strong>
+                                                    <small class="text-muted">@entry.CreatedDate.ToString("dd/MM HH:mm")</small>
+                                                </div>
+                                                @if (!string.IsNullOrEmpty(entry.Note))
+                                                {
+                                                    <small class="text-muted">@entry.Note</small>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Right Column — Summary -->
+                <div class="col-lg-4">
+                    <div class="card bg-dark border-secondary sticky-top" style="top: 100px;">
+                        <div class="card-header border-secondary">
+                            <h5 class="mb-0"><i class="fas fa-receipt me-2 text-accent"></i>Tóm tắt</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Tạm tính</span>
+                                <strong>@order.TotalAmount.ToString("N0") ₫</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Phí vận chuyển</span>
+                                <strong>@order.ShippingFee.ToString("N0") ₫</strong>
+                            </div>
+                            <hr class="border-secondary" />
+                            <div class="d-flex justify-content-between mb-3">
+                                <h5 class="mb-0">Tổng cộng</h5>
+                                <h5 class="text-accent mb-0">@((order.TotalAmount + order.ShippingFee).ToString("N0")) ₫</h5>
+                            </div>
+
+                            <!-- Payment Info -->
+                            @if (order.Payment != null)
+                            {
+                                <div class="border-top border-secondary pt-3 mt-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <small class="text-muted">Thanh toán</small>
+                                        @{
+                                            var payBadge = order.Payment.StatusText switch
+                                            {
+                                                "Paid" => "bg-success",
+                                                "Failed" => "bg-danger",
+                                                _ => "bg-warning text-dark"
+                                            };
+                                        }
+                                        <span class="badge @payBadge">@order.Payment.StatusText</span>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(order.Payment.TransactionRef))
+                                    {
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <small class="text-muted">Mã GD</small>
+                                            <small>@order.Payment.TransactionRef</small>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(order.Payment.BankCode))
+                                    {
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <small class="text-muted">Ngân hàng</small>
+                                            <small>@order.Payment.BankCode</small>
+                                        </div>
+                                    }
+                                </div>
+                            }
+
+                            <!-- Confirm Received Button -->
+                            <div id="confirmReceivedArea" data-order-id="@order.Id">
+                            @if (order.StatusText == "Delivered")
+                            {
+                                <div class="border-top border-secondary pt-3 mt-3">
+                                    <form method="post" asp-page-handler="ConfirmReceived">
+                                        <input type="hidden" name="orderId" value="@order.Id" />
+                                        <button type="submit" class="btn btn-success w-100 btn-lg"
+                                                onclick="return confirm('Xác nhận bạn đã nhận được hàng?')">
+                                            <i class="fas fa-check-circle me-2"></i>Xác nhận đã nhận hàng
+                                        </button>
+                                        <small class="text-muted d-block text-center mt-2">
+                                            Đơn hàng sẽ chuyển sang trạng thái "Hoàn thành"
+                                        </small>
+                                    </form>
+                                </div>
+                            }
+
+                            @if (order.StatusText == "Completed")
+                            {
+                                <div class="border-top border-secondary pt-3 mt-3 text-center">
+                                    <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                                    <p class="text-success mb-0 small">Đơn hàng đã hoàn thành</p>
+                                </div>
+                            }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+    (function() {
+        const orderId = @(Model.Order?.Id ?? 0);
+        if (!orderId) return;
+
+        const statusSteps = ['Pending', 'Confirmed', 'Processing', 'Shipping', 'Delivered', 'Completed'];
+        const stepIcons = ['fa-clock', 'fa-check', 'fa-cog', 'fa-truck', 'fa-box-open', 'fa-flag-checkered'];
+        const badgeMap = {
+            'Completed': 'bg-success', 'Cancelled': 'bg-danger', 'Pending': 'bg-warning text-dark',
+            'Confirmed': 'bg-info', 'Shipping': 'bg-primary', 'Delivered': 'bg-success',
+            'Processing': 'bg-info', 'Refunded': 'bg-secondary'
+        };
+
+        // Listen for order updates via global SignalR connection from site.js
+        // site.js creates the connection; we hook into it after it starts
+        function hookSignalR() {
+            if (typeof signalR === 'undefined') { setTimeout(hookSignalR, 300); return; }
+
+            const conn = new signalR.HubConnectionBuilder()
+                .withUrl('/hubs/notification')
+                .withAutomaticReconnect()
+                .build();
+
+            conn.on('ReceiveOrderUpdate', (updatedOrderId, newStatus, message) => {
+                if (updatedOrderId !== orderId) return;
+
+                // 1. Update status badge
+                const badge = document.getElementById('orderStatusBadge');
+                const statusText = document.getElementById('orderStatusText');
+                if (badge && statusText) {
+                    badge.className = 'badge ' + (badgeMap[newStatus] || 'bg-secondary') + ' fs-6 px-3 py-2';
+                    statusText.textContent = newStatus;
+                    badge.style.animation = 'none';
+                    badge.offsetHeight; // reflow
+                    badge.style.animation = 'badgePulse 0.6s ease';
+                }
+
+                // 2. Update progress tracker
+                const newStep = statusSteps.indexOf(newStatus);
+                const tracker = document.getElementById('progressTracker');
+                if (tracker && newStep >= 0) {
+                    const fill = document.getElementById('progressFill');
+                    if (fill) {
+                        fill.style.width = `calc(${newStep / (statusSteps.length - 1)} * (100% - 120px))`;
+                    }
+                    tracker.querySelectorAll('.step-dot').forEach(dot => {
+                        const si = parseInt(dot.dataset.step);
+                        const isActive = si <= newStep;
+                        const isCurrent = si === newStep;
+                        const circle = dot.querySelector('.step-circle');
+                        const label = dot.querySelector('.step-label');
+                        const icon = circle?.querySelector('i');
+                        if (circle) {
+                            circle.style.background = isActive ? '#ff6b35' : 'rgba(255,255,255,0.1)';
+                            circle.style.boxShadow = isCurrent ? '0 0 12px rgba(255,107,53,0.5)' : 'none';
+                        }
+                        if (icon) {
+                            icon.className = 'fas ' + stepIcons[si] + (isActive ? ' text-white' : ' text-muted');
+                        }
+                        if (label) {
+                            label.className = 'step-label ' + (isActive ? 'text-white' : 'text-muted');
+                        }
+                    });
+                } else if (tracker && (newStatus === 'Cancelled' || newStatus === 'Refunded')) {
+                    // Hide progress tracker for cancelled/refunded
+                    tracker.innerHTML = '';
+                }
+
+                // 3. Update Confirm Received area
+                const confirmArea = document.getElementById('confirmReceivedArea');
+                if (confirmArea) {
+                    if (newStatus === 'Delivered') {
+                        confirmArea.innerHTML = `
+                            <div class="border-top border-secondary pt-3 mt-3">
+                                <form method="post" action="?handler=ConfirmReceived">
+                                    <input type="hidden" name="orderId" value="${orderId}" />
+                                    <input name="__RequestVerificationToken" type="hidden" value="${document.querySelector('input[name=__RequestVerificationToken]')?.value || ''}" />
+                                    <button type="submit" class="btn btn-success w-100 btn-lg"
+                                            onclick="return confirm('Xác nhận bạn đã nhận được hàng?')">
+                                        <i class="fas fa-check-circle me-2"></i>Xác nhận đã nhận hàng
+                                    </button>
+                                    <small class="text-muted d-block text-center mt-2">Đơn hàng sẽ chuyển sang trạng thái "Hoàn thành"</small>
+                                </form>
+                            </div>`;
+                    } else if (newStatus === 'Completed') {
+                        confirmArea.innerHTML = `
+                            <div class="border-top border-secondary pt-3 mt-3 text-center">
+                                <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                                <p class="text-success mb-0 small">Đơn hàng đã hoàn thành</p>
+                            </div>`;
+                    } else {
+                        confirmArea.innerHTML = '';
+                    }
+                }
+
+                // 4. Add timeline entry
+                const timeline = document.querySelector('.timeline-list');
+                if (timeline) {
+                    const now = new Date();
+                    const entry = document.createElement('div');
+                    entry.className = 'd-flex gap-3 mb-3 pb-3 border-bottom border-secondary';
+                    entry.style.animation = 'slideIn 0.4s ease';
+                    entry.innerHTML = `
+                        <div class="text-center" style="min-width: 50px;">
+                            <div class="rounded-circle bg-accent d-flex align-items-center justify-content-center mx-auto" style="width: 32px; height: 32px;">
+                                <i class="fas fa-circle text-white" style="font-size: 0.4rem;"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between">
+                                <strong class="small">→ ${newStatus}</strong>
+                                <small class="text-muted">${now.toLocaleDateString('vi-VN', {day:'2-digit',month:'2-digit'})} ${now.toLocaleTimeString('vi-VN', {hour:'2-digit',minute:'2-digit'})}</small>
+                            </div>
+                            <small class="text-muted">${message}</small>
+                        </div>`;
+                    timeline.prepend(entry);
+                }
+            });
+
+            conn.on('ReceivePaymentConfirmation', (updatedOrderId, status) => {
+                if (updatedOrderId !== orderId) return;
+                // Update payment badge
+                const payBadges = document.querySelectorAll('[data-order-id="' + orderId + '"]');
+                // Find the payment status span in the summary
+                const summaryCard = document.querySelector('.sticky-top .badge');
+                // Simpler: just reload the summary section
+                location.reload();
+            });
+
+            conn.start().catch(err => console.log('OrderDetail SignalR error:', err));
+        }
+
+        hookSignalR();
+    })();
+    </script>
+
+    <style>
+        @@keyframes badgePulse {
+            0% { transform: scale(1); }
+            30% { transform: scale(1.15); }
+            60% { transform: scale(0.95); }
+            100% { transform: scale(1); }
+        }
+    </style>
+}

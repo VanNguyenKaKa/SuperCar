@@ -1,0 +1,150 @@
+@page
+@model HyperCar.Web.Pages.Admin.AccountsModel
+@{
+    ViewData["Title"] = "Manage Accounts";
+}
+
+<section class="pt-5 mt-5">
+    <div class="container-fluid py-4 px-4">
+        <h2 class="section-title mb-4"><i class="fas fa-users me-2"></i>Manage <span class="text-accent">Accounts</span></h2>
+
+        <div class="table-responsive">
+            <table class="table table-dark table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Roles</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model.Users)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-accent rounded-circle d-flex align-items-center justify-content-center me-2" style="width:36px;height:36px;">
+                                        <i class="fas fa-user text-dark"></i>
+                                    </div>
+                                    <strong>@user.FullName</strong>
+                                </div>
+                            </td>
+                            <td>@user.Email</td>
+                            <td>@(user.PhoneNumber ?? "—")</td>
+                            <td>
+                                @foreach (var role in user.Roles)
+                                {
+                                    var roleBadge = role switch { "Admin" => "bg-danger", "Staff" => "bg-info", _ => "bg-secondary" };
+                                    <span class="badge @roleBadge me-1">
+                                        @role
+                                        <form method="post" asp-page-handler="RemoveRole" class="d-inline" onsubmit="return confirm('Remove role @role?')">
+                                            <input type="hidden" name="userId" value="@user.Id" />
+                                            <input type="hidden" name="roleName" value="@role" />
+                                            <button type="submit" class="btn-close btn-close-white ms-1" style="font-size:0.5rem;"></button>
+                                        </form>
+                                    </span>
+                                }
+                                <!-- Add Role dropdown -->
+                                <div class="dropdown d-inline-block">
+                                    <button class="btn btn-sm btn-outline-accent py-0 px-1 dropdown-toggle" data-bs-toggle="dropdown" title="Add role">
+                                        <i class="fas fa-plus" style="font-size:0.7rem;"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-dark">
+                                        @foreach (var role in Model.AllRoles.Where(r => !user.Roles.Contains(r.Name)))
+                                        {
+                                            <li>
+                                                <form method="post" asp-page-handler="AssignRole">
+                                                    <input type="hidden" name="userId" value="@user.Id" />
+                                                    <input type="hidden" name="roleName" value="@role.Name" />
+                                                    <button type="submit" class="dropdown-item">@role.Name</button>
+                                                </form>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-warning me-1" data-bs-toggle="modal" data-bs-target="#editUserModal"
+                                    onclick="editUser('@user.Id','@user.FullName.Replace("'","\\'")','@user.Email','@user.PhoneNumber')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <form method="post" asp-page-handler="Delete" class="d-inline" onsubmit="return confirm('Delete this user?')">
+                                    <input type="hidden" name="userId" value="@user.Id" />
+                                    <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title"><i class="fas fa-user-edit me-2"></i>Edit User</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Update">
+                <div class="modal-body">
+                    <input type="hidden" id="editUserId" name="userId" />
+                    <div class="mb-3">
+                        <label class="form-label">Full Name</label>
+                        <input id="editFullName" name="fullName" class="form-control bg-dark text-light border-secondary" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input id="editEmail" name="email" class="form-control bg-dark text-light border-secondary" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone</label>
+                        <input id="editPhone" name="phone" class="form-control bg-dark text-light border-secondary" />
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-accent">Update User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function editUser(id, name, email, phone) {
+            document.getElementById('editUserId').value = id;
+            document.getElementById('editFullName').value = name;
+            document.getElementById('editEmail').value = email;
+            document.getElementById('editPhone').value = phone || '';
+        }
+
+        // Real-time: auto-reload accounts table on user/role events
+        async function reloadAccountsTable() {
+            try {
+                const response = await fetch(window.location.href);
+                if (!response.ok) return;
+                const html = await response.text();
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const newTbody = doc.querySelector('tbody');
+                const currentTbody = document.querySelector('tbody');
+                if (newTbody && currentTbody) {
+                    currentTbody.innerHTML = newTbody.innerHTML;
+                }
+            } catch (e) { console.error('[Accounts] Refresh error:', e); }
+        }
+
+        window.__pageNotifHandlers = window.__pageNotifHandlers || [];
+        window.__pageNotifHandlers.push(function(message, type) {
+            if (type === 'user' || type === 'role' || type === 'account') {
+                setTimeout(reloadAccountsTable, 500);
+            }
+        });
+    </script>
+}
