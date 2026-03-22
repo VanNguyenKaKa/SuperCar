@@ -22,9 +22,14 @@ namespace HyperCar.DAL.Entities
 
         public bool IsActive { get; set; } = true;
 
+        // Test Drive Booking — No-Show strike system
+        public int NoShowCount { get; set; } = 0;
+        public bool IsBannedFromBooking { get; set; } = false;
+
         // Navigation properties
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
         public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
         public virtual ICollection<ConversationHistory> ConversationHistories { get; set; } = new List<ConversationHistory>();
+        public virtual ICollection<TestDriveBooking> TestDriveBookings { get; set; } = new List<TestDriveBooking>();
     }
 }

@@ -1,4 +1,5 @@
 using HyperCar.DAL.Entities;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace HyperCar.DAL.Repositories
 {
@@ -14,6 +15,9 @@ namespace HyperCar.DAL.Repositories
         IRepository<ConversationHistory> ConversationHistories { get; }
         IRepository<TransactionHistory> TransactionHistories { get; }
         IRepository<ReportSnapshot> ReportSnapshots { get; }
+        IRepository<TestDriveBooking> TestDriveBookings { get; }
+        IRepository<Showroom> Showrooms { get; }
         Task<int> SaveChangesAsync();
+        Task<IDbContextTransaction> BeginTransactionAsync();
     }
 }

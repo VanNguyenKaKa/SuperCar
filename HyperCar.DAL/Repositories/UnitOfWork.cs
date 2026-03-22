@@ -1,5 +1,6 @@
 using HyperCar.DAL.Data;
 using HyperCar.DAL.Entities;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace HyperCar.DAL.Repositories
 {
@@ -18,6 +19,8 @@ namespace HyperCar.DAL.Repositories
         private IRepository<ConversationHistory>? _conversationHistories;
         private IRepository<TransactionHistory>? _transactionHistories;
         private IRepository<ReportSnapshot>? _reportSnapshots;
+        private IRepository<TestDriveBooking>? _testDriveBookings;
+        private IRepository<Showroom>? _showrooms;
 
         public UnitOfWork(HyperCarDbContext context)
         {
@@ -54,9 +57,20 @@ namespace HyperCar.DAL.Repositories
         public IRepository<ReportSnapshot> ReportSnapshots =>
             _reportSnapshots ??= new Repository<ReportSnapshot>(_context);
 
+        public IRepository<TestDriveBooking> TestDriveBookings =>
+            _testDriveBookings ??= new Repository<TestDriveBooking>(_context);
+
+        public IRepository<Showroom> Showrooms =>
+            _showrooms ??= new Repository<Showroom>(_context);
+
         public async Task<int> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync();
+        }
+
+        public async Task<IDbContextTransaction> BeginTransactionAsync()
+        {
+            return await _context.Database.BeginTransactionAsync();
         }
 
         public void Dispose()
@@ -65,3 +79,4 @@ namespace HyperCar.DAL.Repositories
         }
     }
 }
+

@@ -1,0 +1,158 @@
+@page
+@model HyperCar.Web.Pages.Account.MyTestDrivesModel
+@using HyperCar.DAL.Enums
+@{
+    ViewData["Title"] = "Lịch lái thử của tôi";
+}
+
+<section class="pt-5 mt-5">
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold"><i class="fas fa-car-side me-2 text-accent"></i>Lịch lái thử của tôi</h2>
+            <a href="/Account/Dashboard" class="btn btn-outline-light"><i class="fas fa-arrow-left me-2"></i>Bảng điều khiển</a>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>@Model.SuccessMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>@Model.ErrorMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        @if (!Model.Bookings.Any())
+        {
+            <div class="card bg-dark border-secondary text-center py-5">
+                <div class="card-body">
+                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                    <h5>Chưa có lịch lái thử nào</h5>
+                    <p class="text-muted">Hãy khám phá bộ sưu tập và đặt lịch lái thử ngay!</p>
+                    <a href="/Cars" class="btn btn-accent"><i class="fas fa-car me-2"></i>Xem xe</a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div id="testDriveBookingsContainer" class="row g-4">
+                @foreach (var b in Model.Bookings)
+                {
+                    <div class="col-md-6 col-lg-4" data-booking-id="@b.Id">
+                        <div class="card bg-dark border-secondary h-100" style="transition:all .3s;">
+                            @* Car image header *@
+                            @if (!string.IsNullOrEmpty(b.CarImage))
+                            {
+                                <div style="height:160px;overflow:hidden;border-radius:12px 12px 0 0;">
+                                    <img src="@b.CarImage" alt="@b.CarName" class="w-100 h-100" style="object-fit:cover;" />
+                                </div>
+                            }
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="fw-bold mb-0">@b.CarName</h5>
+                                    <span class="badge @HyperCar.Web.Pages.Account.MyTestDrivesModel.GetStatusBadge(b.Status)" id="status-badge-@b.Id">
+                                        <i class="@HyperCar.Web.Pages.Account.MyTestDrivesModel.GetStatusIcon(b.Status) me-1"></i>@HyperCar.Web.Pages.Account.MyTestDrivesModel.GetStatusText(b.Status)
+                                    </span>
+                                </div>
+
+                                <div class="small text-muted mb-3">
+                                    <div class="mb-1"><i class="fas fa-calendar me-2 text-accent"></i>@b.ScheduledDate.ToString("dd/MM/yyyy")</div>
+                                    <div class="mb-1"><i class="fas fa-clock me-2 text-accent"></i>@b.ScheduledDate.ToString("HH:mm") - @b.ScheduledDate.AddHours(1).ToString("HH:mm")</div>
+                                    @if (!string.IsNullOrEmpty(b.ShowroomName))
+                                    {
+                                        <div class="mb-1"><i class="fas fa-building me-2 text-accent"></i>@b.ShowroomName</div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(b.Notes))
+                                    {
+                                        <div class="mb-1"><i class="fas fa-sticky-note me-2 text-accent"></i>@b.Notes</div>
+                                    }
+                                </div>
+
+                                @* Admin response *@
+                                @if (!string.IsNullOrEmpty(b.AdminResponse))
+                                {
+                                    <div class="alert alert-info py-2 mb-2 small" id="admin-response-@b.Id">
+                                        <i class="fas fa-comment-dots me-1"></i><strong>Admin:</strong> @b.AdminResponse
+                                    </div>
+                                }
+
+                                @* Timeline *@
+                                <div class="small text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>Đặt lúc: @b.CreatedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                </div>
+                            </div>
+
+                            @* Cancel button (only for Pending or Confirmed) *@
+                            @if (b.Status == BookingStatus.Pending || b.Status == BookingStatus.Confirmed)
+                            {
+                                <div class="card-footer border-secondary bg-transparent text-end">
+                                    <form method="post" asp-page-handler="Cancel"
+                                          onsubmit="return confirm('Bạn muốn hủy lịch lái thử này?');">
+                                        <input type="hidden" name="bookingId" value="@b.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-times me-1"></i>Hủy lịch
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        // Real-time booking status updates via SignalR
+        (function () {
+            const conn = new signalR.HubConnectionBuilder()
+                .withUrl('/hubs/notification')
+                .withAutomaticReconnect()
+                .build();
+
+            conn.on('ReceiveTestDriveUpdate', function (bookingId, newStatus, statusBadge, statusText, statusIcon, adminResponse) {
+                const card = document.querySelector(`[data-booking-id="${bookingId}"]`);
+                if (!card) return;
+
+                // Update badge
+                const badge = card.querySelector(`#status-badge-${bookingId}`);
+                if (badge) {
+                    badge.className = `badge ${statusBadge}`;
+                    badge.innerHTML = `<i class="${statusIcon} me-1"></i>${statusText}`;
+                }
+
+                // Flash update animation
+                card.querySelector('.card').style.boxShadow = '0 0 20px rgba(255,107,53,0.5)';
+                setTimeout(() => { card.querySelector('.card').style.boxShadow = ''; }, 2000);
+
+                // Update admin response if provided
+                if (adminResponse) {
+                    let responseEl = card.querySelector(`#admin-response-${bookingId}`);
+                    if (!responseEl) {
+                        responseEl = document.createElement('div');
+                        responseEl.id = `admin-response-${bookingId}`;
+                        responseEl.className = 'alert alert-info py-2 mb-2 small';
+                        const body = card.querySelector('.card-body');
+                        body.insertBefore(responseEl, body.lastElementChild);
+                    }
+                    responseEl.innerHTML = `<i class="fas fa-comment-dots me-1"></i><strong>Admin:</strong> ${adminResponse}`;
+                }
+
+                // Hide cancel button if status changed to Completed/Cancelled/NoShow
+                if (newStatus === 'Completed' || newStatus === 'Cancelled' || newStatus === 'NoShow') {
+                    const footer = card.querySelector('.card-footer');
+                    if (footer) footer.remove();
+                }
+            });
+
+            conn.start().catch(err => console.log('SignalR error:', err));
+        })();
+    </script>
+}

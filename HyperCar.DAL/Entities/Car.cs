@@ -38,6 +38,12 @@ namespace HyperCar.DAL.Entities
         [MaxLength(100)]
         public string? Category { get; set; }
 
+        /// <summary>
+        /// Denormalized average rating, updated transactionally when reviews are added/toggled
+        /// </summary>
+        [Column(TypeName = "float")]
+        public double AverageRating { get; set; } = 0;
+
         public bool IsActive { get; set; } = true;
 
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
@@ -50,5 +56,6 @@ namespace HyperCar.DAL.Entities
 
         public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
         public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
+        public virtual ICollection<TestDriveBooking> TestDriveBookings { get; set; } = new List<TestDriveBooking>();
     }
 }

@@ -4,6 +4,7 @@ wwwroot\js\cart.js
 wwwroot\js\chatbot.js
 wwwroot\js\checkout.js
 wwwroot\js\site.js
+wwwroot\js\testdrive.js
 wwwroot\lib\bootstrap\LICENSE
 wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css
 wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css.map

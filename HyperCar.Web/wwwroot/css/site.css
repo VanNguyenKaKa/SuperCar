@@ -675,3 +675,29 @@ body {
 .dropdown-item:hover {
     background: var(--bg-card-hover);
 }
+
+/* ===== Test Drive Modal (white-bg overrides) ===== */
+#testDriveModal .form-control,
+#testDriveModal .form-select {
+    background: #fafafa !important;
+    color: #1a1a1a !important;
+    border: 1px solid #ddd !important;
+}
+
+#testDriveModal .form-control:focus,
+#testDriveModal .form-select:focus {
+    background: #fff !important;
+    border-color: #c0a23d !important;
+    box-shadow: 0 0 0 3px rgba(192, 162, 61, 0.2) !important;
+    color: #1a1a1a !important;
+}
+
+#testDriveModal .form-check-input {
+    background-color: #fff;
+    border-color: #999;
+}
+
+#testDriveModal .form-check-input:checked {
+    background-color: #c0a23d;
+    border-color: #c0a23d;
+}

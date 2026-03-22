@@ -11,10 +11,24 @@ namespace HyperCar.DAL.Entities
         public string UserId { get; set; } = string.Empty;
 
         public int CarId { get; set; }
+
+        public int? OrderItemId { get; set; }
+
+        [Range(1, 5)]
         public int Rating { get; set; }
 
         [MaxLength(2000)]
         public string? Comment { get; set; }
+        [MaxLength(2000)]
+        public string? ImageUrls { get; set; }
+
+        public bool IsDeleted { get; set; } = false;
+        public bool IsEdited { get; set; } = false;
+        public DateTime? UpdatedAt { get; set; }
+
+        public bool IsAiFlagged { get; set; } = false;
+        [MaxLength(500)]
+        public string? AiFlagReason { get; set; }
 
         public bool IsActive { get; set; } = true;
 
@@ -26,5 +40,8 @@ namespace HyperCar.DAL.Entities
 
         [ForeignKey(nameof(CarId))]
         public virtual Car Car { get; set; } = null!;
+
+        [ForeignKey(nameof(OrderItemId))]
+        public virtual OrderItem? OrderItem { get; set; }
     }
 }

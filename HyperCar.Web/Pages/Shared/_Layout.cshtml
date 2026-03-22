@@ -1,4 +1,4 @@
-﻿@using HyperCar.BLL.Interfaces
+@using HyperCar.BLL.Interfaces
 @using Microsoft.AspNetCore.Antiforgery
 @inject IAuthService AuthService
 @inject IAntiforgery Antiforgery
@@ -86,6 +86,7 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
                                 <li><a class="dropdown-item" href="/Account/Dashboard"><i class="fas fa-tachometer-alt me-2"></i>Bảng điều khiển</a></li>
+                                <li><a class="dropdown-item" href="/Account/MyTestDrives"><i class="fas fa-car-side me-2"></i>Lịch lái thử</a></li>
                                 @if (isAdmin)
                                 {
                                     <li><hr class="dropdown-divider" /></li>
@@ -96,6 +97,9 @@
                                     <li><a class="dropdown-item" href="/Admin/Orders"><i class="fas fa-box me-2"></i>Quản lý đơn hàng</a></li>
                                     <li><a class="dropdown-item" href="/Admin/Accounts"><i class="fas fa-users me-2"></i>Quản lý tài khoản</a></li>
                                     <li><a class="dropdown-item" href="/Admin/Roles"><i class="fas fa-user-shield me-2"></i>Quản lý vai trò</a></li>
+                                    <li><a class="dropdown-item" href="/Admin/Reviews"><i class="fas fa-comments me-2"></i>Quản lý đánh giá</a></li>
+                                    <li><a class="dropdown-item" href="/Admin/TestDrives"><i class="fas fa-car-side me-2"></i>Lịch lái thử</a></li>
+                                    <li><a class="dropdown-item" href="/Admin/Showrooms"><i class="fas fa-building me-2"></i>Showroom</a></li>
                                 }
                                 <li><hr class="dropdown-divider" /></li>
                                 <li>

@@ -1,0 +1,187 @@
+@page
+@model HyperCar.Web.Pages.Admin.TestDrives.IndexModel
+@using HyperCar.DAL.Enums
+@{
+    ViewData["Title"] = "Quản lý lịch lái thử";
+}
+
+<section class="pt-5 mt-5">
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold"><i class="fas fa-steering-wheel me-2 text-accent"></i>Quản lý lịch lái thử</h2>
+            <a href="/Admin/Dashboard" class="btn btn-outline-light"><i class="fas fa-arrow-left me-2"></i>Quay lại</a>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>@Model.SuccessMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>@Model.ErrorMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        @* ═══ Stats Cards ═══ *@
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card bg-dark border-secondary text-center p-3">
+                    <h3 class="text-warning mb-0">@Model.Bookings.Count(b => b.Status == BookingStatus.Pending)</h3>
+                    <small class="text-muted">Chờ xác nhận</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-dark border-secondary text-center p-3">
+                    <h3 class="text-info mb-0">@Model.Bookings.Count(b => b.Status == BookingStatus.Confirmed)</h3>
+                    <small class="text-muted">Đã xác nhận</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-dark border-secondary text-center p-3">
+                    <h3 class="text-success mb-0">@Model.Bookings.Count(b => b.Status == BookingStatus.Completed)</h3>
+                    <small class="text-muted">Hoàn thành</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-dark border-secondary text-center p-3">
+                    <h3 class="text-danger mb-0">@Model.Bookings.Count(b => b.Status == BookingStatus.NoShow)</h3>
+                    <small class="text-muted">Vắng mặt</small>
+                </div>
+            </div>
+        </div>
+
+        @* ═══ Bookings Table ═══ *@
+        <div class="card bg-dark border-secondary">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Khách hàng</th>
+                                <th>Xe</th>
+                                <th>Ngày giờ</th>
+                                <th>Ghi chú</th>
+                                <th>Trạng thái</th>
+                                <th class="text-center">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var booking in Model.Bookings)
+                            {
+                                <tr>
+                                    <td>@booking.Id</td>
+                                    <td>
+                                        <div class="fw-semibold">@booking.UserName</div>
+                                        <small class="text-muted">@booking.UserEmail</small>
+                                        @if (!string.IsNullOrEmpty(booking.UserPhone))
+                                        {
+                                            <br /><small class="text-muted"><i class="fas fa-phone me-1"></i>@booking.UserPhone</small>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            @if (!string.IsNullOrEmpty(booking.CarImage))
+                                            {
+                                                <img src="@booking.CarImage" alt="" class="rounded" style="width:40px;height:30px;object-fit:cover;" />
+                                            }
+                                            <span>@booking.CarName</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>@booking.ScheduledDate.ToString("dd/MM/yyyy")</div>
+                                        <small class="text-accent fw-semibold">@booking.ScheduledDate.ToString("HH:mm") – @booking.ScheduledDate.AddHours(1).ToString("HH:mm")</small>
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(booking.Notes))
+                                        {
+                                            <small class="text-muted" title="@booking.Notes">@(booking.Notes.Length > 50 ? booking.Notes[..50] + "..." : booking.Notes)</small>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted">—</small>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge @HyperCar.Web.Pages.Admin.TestDrives.IndexModel.GetStatusBadge(booking.Status)">
+                                            @HyperCar.Web.Pages.Admin.TestDrives.IndexModel.GetStatusText(booking.Status)
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        @if (booking.Status == BookingStatus.Pending)
+                                        {
+                                            <form method="post" asp-page-handler="Confirm" class="d-inline">
+                                                <input type="hidden" name="bookingId" value="@booking.Id" />
+                                                <button type="submit" class="btn btn-sm btn-outline-info" title="Xác nhận">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </form>
+                                            <form method="post" asp-page-handler="Cancel" class="d-inline">
+                                                <input type="hidden" name="bookingId" value="@booking.Id" />
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Hủy"
+                                                        onclick="return confirm('Hủy lịch lái thử này?');">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        @if (booking.Status == BookingStatus.Confirmed)
+                                        {
+                                            <form method="post" asp-page-handler="Complete" class="d-inline">
+                                                <input type="hidden" name="bookingId" value="@booking.Id" />
+                                                <button type="submit" class="btn btn-sm btn-outline-success" title="Hoàn thành">
+                                                    <i class="fas fa-check-double"></i>
+                                                </button>
+                                            </form>
+                                            <form method="post" asp-page-handler="NoShow" class="d-inline">
+                                                <input type="hidden" name="bookingId" value="@booking.Id" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Vắng mặt"
+                                                        onclick="return confirm('Đánh dấu vắng mặt? Hành động này sẽ tăng số lần vi phạm của khách hàng.');">
+                                                    <i class="fas fa-user-slash"></i>
+                                                </button>
+                                            </form>
+                                            <form method="post" asp-page-handler="Cancel" class="d-inline">
+                                                <input type="hidden" name="bookingId" value="@booking.Id" />
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Hủy"
+                                                        onclick="return confirm('Hủy lịch lái thử này?');">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        @if (booking.Status == BookingStatus.Completed || booking.Status == BookingStatus.Cancelled || booking.Status == BookingStatus.NoShow)
+                                        {
+                                            <span class="text-muted small">—</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        // Admin auto-refresh on new booking
+        (function () {
+            const conn = new signalR.HubConnectionBuilder()
+                .withUrl('/hubs/notification')
+                .withAutomaticReconnect()
+                .build();
+
+            conn.on('ReceiveNewTestDriveBooking', function () {
+                // Auto-refresh the page to show new booking
+                window.location.reload();
+            });
+
+            conn.start().catch(err => console.log('Admin TestDrive SignalR error:', err));
+        })();
+    </script>
+}

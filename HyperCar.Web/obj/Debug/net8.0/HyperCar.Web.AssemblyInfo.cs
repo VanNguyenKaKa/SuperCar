@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HyperCar.Web")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+17eac6ba4a16cda09315c9f56b15c3b3422dece2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+033070d226d5a16e287e66679af86e38f16dc7a6")]
 [assembly: System.Reflection.AssemblyProductAttribute("HyperCar.Web")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HyperCar.Web")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

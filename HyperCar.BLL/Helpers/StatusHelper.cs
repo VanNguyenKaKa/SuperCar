@@ -60,5 +60,15 @@ namespace HyperCar.BLL.Helpers
             "Refunded" => "Đã hoàn tiền",
             _ => englishStatus
         };
+
+        public static string ToVietnamese(BookingStatus status) => status switch
+        {
+            BookingStatus.Pending => "Chờ xác nhận",
+            BookingStatus.Confirmed => "Đã xác nhận",
+            BookingStatus.Completed => "Hoàn thành",
+            BookingStatus.Cancelled => "Đã hủy",
+            BookingStatus.NoShow => "Vắng mặt",
+            _ => status.ToString()
+        };
     }
 }

@@ -58,6 +58,8 @@ namespace HyperCar.BLL.Extensions
             services.AddScoped<IAIChatService, AIChatService>();
             services.AddScoped<IReportService, ReportService>();
             services.AddScoped<IReviewService, ReviewService>();
+            services.AddScoped<IAIModerationService, AIModerationService>();
+            services.AddScoped<ITestDriveService, TestDriveService>();
 
             // ===== Cloudinary — Singleton (1 instance per app) =====
             services.AddSingleton<Cloudinary>(sp =>

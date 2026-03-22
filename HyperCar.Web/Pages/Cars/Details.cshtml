@@ -8,6 +8,22 @@
     <div class="container py-4">
         @if (Model.Car != null)
         {
+            <!-- Flash Messages -->
+            @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>@Model.SuccessMessage
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>@Model.ErrorMessage
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
             <div class="row g-5">
                 <div class="col-lg-6">
                     <div class="car-detail-img">
@@ -17,7 +33,30 @@
                 <div class="col-lg-6">
                     <span class="badge bg-accent mb-2">@Model.Car.Category</span>
                     <h1 class="fw-bold">@Model.Car.Name</h1>
-                    <h4 class="text-muted mb-3">@Model.Car.BrandName</h4>
+                    <h4 class="text-muted mb-2">@Model.Car.BrandName</h4>
+
+                    <!-- Average Rating -->
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <div class="star-rating">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= Math.Floor(Model.AverageRating))
+                                {
+                                    <i class="fas fa-star text-warning"></i>
+                                }
+                                else if (i - 0.5 <= Model.AverageRating)
+                                {
+                                    <i class="fas fa-star-half-alt text-warning"></i>
+                                }
+                                else
+                                {
+                                    <i class="far fa-star text-muted"></i>
+                                }
+                            }
+                        </div>
+                        <span class="text-muted">(@Model.AverageRating.ToString("F1")) · @(Model.Reviews?.Count() ?? 0) đánh giá</span>
+                    </div>
+
                     <h2 class="text-accent mb-4">$@Model.Car.Price.ToString("N0")</h2>
 
                     <!-- Specs Grid -->
@@ -53,30 +92,376 @@
                             <span class="badge bg-danger fs-6">Hết hàng</span>
                         }
                     </div>
+
+                    @* ═══ TEST DRIVE BOOKING BUTTON ═══ *@
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-outline-light btn-lg w-100" data-bs-toggle="modal" data-bs-target="#testDriveModal"
+                                    style="border:1px solid rgba(255,255,255,0.2);letter-spacing:1px;">
+                                <i class="fas fa-steering-wheel me-2"></i>ĐẶT LỊCH LÁI THỬ
+                            </button>
+                        </div>
+                    }
                 </div>
             </div>
 
-            <!-- Reviews -->
+            @* ═══════════════════════════════════════════════════ *@
+            @* TEST DRIVE BOOKING MODAL (BMW-style)               *@
+            @* ═══════════════════════════════════════════════════ *@
+            <div class="modal fade" id="testDriveModal" tabindex="-1" data-car-id="@Model.Car.Id">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content border-0 overflow-hidden" style="border-radius:16px;">
+                        <div class="row g-0">
+                            @* ── Left: Car Image (dark) ── *@
+                            <div class="col-md-5 d-none d-md-block position-relative"
+                                 style="background:linear-gradient(135deg,#0d0d0d 0%,#1a1a2e 100%);min-height:500px;">
+                                <div style="position:absolute;inset:0;background:url('@(Model.Car.ImageUrl ?? "/images/car-placeholder.jpg")') center/cover no-repeat;opacity:0.4;filter:blur(2px);"></div>
+                                <div class="position-relative d-flex flex-column justify-content-center align-items-center h-100 p-4 text-center" style="z-index:1;">
+                                    <img src="@(Model.Car.ImageUrl ?? "/images/car-placeholder.jpg")" alt="@Model.Car.Name" class="img-fluid rounded-3 mb-3"
+                                         style="max-height:200px;object-fit:contain;filter:drop-shadow(0 10px 30px rgba(0,0,0,0.5));" />
+                                    <h4 class="fw-bold text-white mb-1">@Model.Car.Name</h4>
+                                    <p class="text-white-50 small mb-2">@Model.Car.BrandName</p>
+                                    <div class="d-flex gap-3 text-white-50 small">
+                                        <span><i class="fas fa-horse-head me-1"></i>@Model.Car.HorsePower HP</span>
+                                        <span><i class="fas fa-tachometer-alt me-1"></i>@Model.Car.TopSpeed km/h</span>
+                                    </div>
+                                    <div class="mt-3">
+                                        <span class="badge bg-dark bg-opacity-75 px-3 py-2 fs-6" style="letter-spacing:1px;">TEST DRIVE</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @* ── Right: Booking Form (light) ── *@
+                            <div class="col-md-7" style="background:#ffffff;color:#1a1a1a;">
+                                <div class="p-4" style="max-height:600px;overflow-y:auto;">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="fw-bold mb-0" style="color:#1a1a1a;"><i class="fas fa-calendar-check me-2" style="color:#c0a23d;"></i>Đặt lịch lái thử</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter:none;"></button>
+                                    </div>
+
+                                    @* Countdown Timer *@
+                                    <div id="timerWrap" class="d-none mb-3 text-center">
+                                        <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill" style="background:#f0f0f0;">
+                                            <i class="fas fa-clock" style="color:#c0a23d;"></i>
+                                            <span style="color:#333;font-size:0.85rem;">Giữ chỗ còn:</span>
+                                            <span id="bookingTimer" class="fw-bold" style="font-family:monospace;font-size:1.1rem;color:#c0a23d;">05:00</span>
+                                        </div>
+                                    </div>
+
+                                    @* Showroom *@
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold" style="color:#555;"><i class="fas fa-building me-1" style="color:#c0a23d;"></i>Chọn Showroom</label>
+                                        <select id="testDriveShowroom" class="form-select" style="border:1px solid #ddd;color:#1a1a1a;background:#fafafa;">
+                                            <option value="">— Chọn showroom —</option>
+                                            @foreach (var sr in Model.Showrooms)
+                                            {
+                                                <option value="@sr.Id">@sr.Name @(sr.Address != null ? $"— {sr.Address}" : "")</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    @* Date Picker *@
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold" style="color:#555;">Chọn ngày lái thử</label>
+                                        <input type="date" id="testDriveDate" class="form-control"
+                                               min="@DateTime.Now.AddDays(1).ToString("yyyy-MM-dd")"
+                                               max="@DateTime.Now.AddDays(30).ToString("yyyy-MM-dd")"
+                                               style="border:1px solid #ddd;color:#1a1a1a;background:#fafafa;" />
+                                    </div>
+
+                                    @* Time Slots *@
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold" style="color:#555;">Chọn khung giờ <small class="text-muted">(08:00 – 16:00)</small></label>
+                                        <div id="timeSlotsContainer">
+                                            <p class="text-muted text-center small">Vui lòng chọn ngày trước.</p>
+                                        </div>
+                                    </div>
+
+                                    @* Notes *@
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold" style="color:#555;">Ghi chú <small class="text-muted">(tùy chọn)</small></label>
+                                        <textarea id="testDriveNotes" class="form-control" rows="2"
+                                                  placeholder="Yêu cầu đặc biệt..."
+                                                  maxlength="500"
+                                                  style="border:1px solid #ddd;color:#1a1a1a;background:#fafafa;resize:none;"></textarea>
+                                    </div>
+
+                                    @* ═══ Privacy Policy ═══ *@
+                                    <div class="mb-3 p-3 rounded" style="background:#f9f9f9;border:1px solid #eee;">
+                                        <label class="form-label fw-semibold mb-2" style="color:#555;"><i class="fas fa-shield-alt me-1" style="color:#c0a23d;"></i>Chính sách bảo mật thông tin</label>
+                                        <div style="color:#666;font-size:0.82rem;line-height:1.6;max-height:150px;overflow-y:auto;">
+                                            <p class="mb-2">1. Tôi trên 18 tuổi và tôi có bằng lái xe B2 hợp lệ.*</p>
+                                            <p class="mb-2">2. Tôi đồng ý để HyperCar (và các công ty liên kết, đối tác của HyperCar) thu thập, sử dụng, hiệu chỉnh, lưu trữ, sao chép thông tin của tôi, cung cấp thông tin trên cho bên thứ ba có liên quan (bao gồm nhưng không giới hạn các công ty thuộc Tập đoàn HyperCar) nhằm mục đích chăm sóc khách hàng, gửi thiệp mời đến các sự kiện, các hoạt động tiếp thị, nghiên cứu và các mục đích thống kê khác giữa các đối tác hoặc công ty thành viên của tập đoàn BMW. Tôi cũng biết rằng thông tin cá nhân của tôi sẽ được sử dụng dựa trên luật bảo vệ sự riêng tư hiện hành.*</p>
+                                            <p class="mb-0">3. Tôi cũng đồng ý để HyperCar (và các công ty liên kết, đối tác của HyperCar) liên hệ với tôi nhằm mục đích thực hiện chương trình quảng cáo/ chăm sóc khách hàng qua số điện thoại/ email và thông tin liên hệ khác mà tôi đã đăng ký (dù tôi đã đăng ký danh sách không quảng cáo hay không).</p>
+                                        </div>
+                                        <div class="form-check mt-2">
+                                            <input class="form-check-input" type="checkbox" id="policyAgree" style="border-color:#999;">
+                                            <label class="form-check-label fw-semibold" for="policyAgree" style="color:#333;font-size:0.85rem;">
+                                                Tôi đồng ý với các điều khoản trên <span class="text-danger">*</span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    @* Submit Button *@
+                                    <button type="button" id="submitTestDriveBtn" class="btn w-100 py-2 fw-bold" disabled
+                                            style="background:linear-gradient(135deg,#c0a23d,#8b7328);color:#fff;letter-spacing:0.5px;border:none;border-radius:8px;transition:all .2s;">
+                                        <i class="fas fa-paper-plane me-2"></i>Xác nhận đặt lịch
+                                    </button>
+
+                                    @* Result message *@
+                                    <div id="testDriveResult" class="d-none mt-3 mb-0"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- WRITE A REVIEW FORM                            -->
+            <!-- ═══════════════════════════════════════════════ -->
+            @if (Model.CanReview)
+            {
+                <div class="mt-5" id="reviewFormSection">
+                    <div class="card bg-dark border-secondary">
+                        <div class="card-header border-secondary">
+                            <h5 class="mb-0"><i class="fas fa-pen me-2 text-accent"></i>Viết đánh giá</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" asp-page-handler="Review" enctype="multipart/form-data" id="reviewForm">
+                                <input type="hidden" asp-for="ReviewCarId" value="@Model.Car.Id" />
+
+                                <!-- Order Item Dropdown -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Chọn đơn hàng đã mua</label>
+                                    <select asp-for="ReviewOrderItemId" class="form-select bg-dark text-light border-secondary" required>
+                                        <option value="">-- Chọn đơn hàng --</option>
+                                        @foreach (var item in Model.EligibleOrderItems!)
+                                        {
+                                            <option value="@item.OrderItemId">@item.DisplayText</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <!-- Star Rating -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Đánh giá</label>
+                                    <div class="star-rating-input" data-target="addRatingValue">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            <i class="far fa-star fs-3" data-value="@i" style="cursor: pointer; transition: color 0.15s;"></i>
+                                        }
+                                        <input type="hidden" asp-for="ReviewRating" id="addRatingValue" value="0" />
+                                    </div>
+                                    <div class="text-danger small mt-1 d-none" data-rating-error="addRatingValue">Vui lòng chọn số sao.</div>
+                                </div>
+
+                                <!-- Comment -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Nhận xét</label>
+                                    <textarea asp-for="ReviewComment" class="form-control bg-dark text-light border-secondary" rows="3"
+                                              placeholder="Chia sẻ trải nghiệm của bạn..." maxlength="2000"></textarea>
+                                </div>
+
+                                <!-- 2 Separate Image Upload Slots -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Ảnh đính kèm <small class="text-muted">(tối đa 2 ảnh, mỗi ảnh &lt; 2MB, .jpg/.png)</small></label>
+                                    <div class="d-flex gap-3">
+                                        <!-- Slot 1 -->
+                                        <div class="image-upload-slot" data-input="addSlot1Input">
+                                            <input type="file" asp-for="ReviewImage1" id="addSlot1Input" accept=".jpg,.jpeg,.png" class="d-none" />
+                                            <div class="upload-box" id="addSlot1Box">
+                                                <i class="fas fa-plus"></i>
+                                                <small>Ảnh 1</small>
+                                            </div>
+                                            <img id="addSlot1Preview" class="upload-preview d-none" alt="" />
+                                            <button type="button" class="upload-remove d-none" data-slot="addSlot1">&times;</button>
+                                        </div>
+                                        <!-- Slot 2 -->
+                                        <div class="image-upload-slot" data-input="addSlot2Input">
+                                            <input type="file" asp-for="ReviewImage2" id="addSlot2Input" accept=".jpg,.jpeg,.png" class="d-none" />
+                                            <div class="upload-box" id="addSlot2Box">
+                                                <i class="fas fa-plus"></i>
+                                                <small>Ảnh 2</small>
+                                            </div>
+                                            <img id="addSlot2Preview" class="upload-preview d-none" alt="" />
+                                            <button type="button" class="upload-remove d-none" data-slot="addSlot2">&times;</button>
+                                        </div>
+                                    </div>
+                                    <div class="text-danger small mt-1 d-none" id="addImageError"></div>
+                                </div>
+
+                                <button type="submit" class="btn btn-accent">
+                                    <i class="fas fa-paper-plane me-2"></i>Gửi đánh giá
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="mt-5">
+                    <div class="alert alert-secondary">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Bạn cần mua và nhận hàng thành công để có thể đánh giá xe này.
+                    </div>
+                </div>
+            }
+
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- CUSTOMER REVIEWS LIST                          -->
+            <!-- ═══════════════════════════════════════════════ -->
             <div class="mt-5">
-                <h3>Đánh giá khách hàng <span class="text-muted fs-6">(@Model.Reviews?.Count() ?? 0)</span></h3>
+                <h3>Đánh giá khách hàng <span class="text-muted fs-6">(@(Model.Reviews?.Count() ?? 0))</span></h3>
                 <hr />
                 @if (Model.Reviews?.Any() == true)
                 {
                     @foreach (var review in Model.Reviews)
                     {
-                        <div class="review-card mb-3">
-                            <div class="d-flex justify-content-between">
-                                <strong>@review.UserName</strong>
-                                <span class="text-muted">@review.CreatedDate.ToString("MMM dd, yyyy")</span>
+                        <div class="review-card mb-4 p-3 rounded-3" data-review-id="@review.Id" data-user-id="@review.UserId" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    @if (!string.IsNullOrEmpty(review.UserAvatar))
+                                    {
+                                        <img src="@review.UserAvatar" alt="" class="rounded-circle" style="width:36px;height:36px;object-fit:cover;" />
+                                    }
+                                    else
+                                    {
+                                        <div class="rounded-circle bg-accent d-flex align-items-center justify-content-center" style="width:36px;height:36px;">
+                                            <i class="fas fa-user text-white"></i>
+                                        </div>
+                                    }
+                                    <strong>@review.UserName</strong>
+                                    @if (review.IsEdited)
+                                    {
+                                        <span class="badge bg-secondary small" title="Đã chỉnh sửa lúc @(review.UpdatedAt?.ToString("dd/MM/yyyy HH:mm"))">
+                                            <i class="fas fa-edit me-1"></i>Đã chỉnh sửa
+                                        </span>
+                                    }
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-muted small">@review.CreatedDate.ToString("dd/MM/yyyy")</span>
+                                    @if (Model.CurrentUserId == review.UserId && !review.IsEdited)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-warning"
+                                                data-bs-toggle="modal" data-bs-target="#editModal-@review.Id"
+                                                title="Chỉnh sửa (chỉ được 1 lần)">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    }
+                                </div>
                             </div>
-                            <div class="star-rating mb-1">
+                            <div class="star-rating mb-2">
                                 @for (int i = 1; i <= 5; i++)
                                 {
-                                    <i class="fas fa-star @(i <= review.Rating ? "text-warning" : "text-muted")"></i>
+                                    <i class="fas fa-star @(i <= review.Rating ? "text-warning" : "text-muted")" style="font-size: 0.9rem;"></i>
                                 }
                             </div>
-                            <p class="mb-0">@review.Comment</p>
+                            @if (!string.IsNullOrEmpty(review.Comment))
+                            {
+                                <p class="mb-2">@review.Comment</p>
+                            }
+                            @if (review.ImageUrls?.Any() == true)
+                            {
+                                <div class="d-flex gap-2 mt-2">
+                                    @foreach (var imgUrl in review.ImageUrls)
+                                    {
+                                        <a href="@imgUrl" target="_blank" rel="noopener">
+                                            <img src="@imgUrl" alt="Review image" class="rounded"
+                                                 style="width: 120px; height: 90px; object-fit: cover; border: 1px solid rgba(255,255,255,0.1); cursor: zoom-in;" />
+                                        </a>
+                                    }
+                                </div>
+                            }
+                            @if (review.IsAiFlagged && Model.CurrentUserId == review.UserId)
+                            {
+                                <div class="alert alert-danger py-2 mt-2 mb-0 small" style="border-left: 3px solid #dc3545;">
+                                    <i class="fas fa-robot me-1"></i>
+                                    ⚠️ Hệ thống tự động phát hiện ngôn từ không phù hợp. Đánh giá này hiện <strong>chỉ hiển thị với bạn</strong>.
+                                    @if (!string.IsNullOrEmpty(review.AiFlagReason))
+                                    {
+                                        <br /><small class="text-muted">Lý do: @review.AiFlagReason</small>
+                                    }
+                                </div>
+                            }
                         </div>
+
+                        <!-- Edit Modal (only if user owns it and hasn't edited yet) -->
+                        @if (Model.CurrentUserId == review.UserId && !review.IsEdited)
+                        {
+                            <div class="modal fade" id="editModal-@review.Id" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content bg-dark border-secondary">
+                                        <form method="post" asp-page-handler="EditReview" asp-route-carId="@Model.Car.Id" enctype="multipart/form-data">
+                                            <div class="modal-header border-secondary">
+                                                <h5 class="modal-title"><i class="fas fa-edit me-2 text-warning"></i>Chỉnh sửa đánh giá</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="alert alert-warning py-2 small">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                                    Lưu ý: Bạn chỉ được chỉnh sửa đánh giá <strong>1 lần duy nhất</strong>.
+                                                </div>
+                                                <input type="hidden" asp-for="EditReviewId" value="@review.Id" />
+
+                                                <!-- Star Rating -->
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-semibold">Đánh giá</label>
+                                                    <div class="star-rating-input" data-target="editRatingValue-@review.Id" data-initial="@review.Rating">
+                                                        @for (int i = 1; i <= 5; i++)
+                                                        {
+                                                            <i class="@(i <= review.Rating ? "fas" : "far") fa-star fs-4 @(i <= review.Rating ? "text-warning" : "")"
+                                                               data-value="@i" style="cursor: pointer; transition: color 0.15s;"></i>
+                                                        }
+                                                        <input type="hidden" asp-for="EditRating" id="editRatingValue-@review.Id" value="@review.Rating" />
+                                                    </div>
+                                                </div>
+
+                                                <!-- Comment -->
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-semibold">Nhận xét</label>
+                                                    <textarea asp-for="EditComment" class="form-control bg-dark text-light border-secondary"
+                                                              rows="3" maxlength="2000">@review.Comment</textarea>
+                                                </div>
+
+                                                <!-- 2 Image Upload Slots -->
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-semibold">Ảnh mới <small class="text-muted">(để trống nếu giữ ảnh cũ)</small></label>
+                                                    <div class="d-flex gap-3">
+                                                        <div class="image-upload-slot" data-input="editSlot1Input-@review.Id">
+                                                            <input type="file" asp-for="EditImage1" id="editSlot1Input-@review.Id" accept=".jpg,.jpeg,.png" class="d-none" />
+                                                            <div class="upload-box" id="editSlot1Box-@review.Id">
+                                                                <i class="fas fa-plus"></i>
+                                                                <small>Ảnh 1</small>
+                                                            </div>
+                                                            <img id="editSlot1Preview-@review.Id" class="upload-preview d-none" alt="" />
+                                                            <button type="button" class="upload-remove d-none" data-slot="editSlot1-@review.Id">&times;</button>
+                                                        </div>
+                                                        <div class="image-upload-slot" data-input="editSlot2Input-@review.Id">
+                                                            <input type="file" asp-for="EditImage2" id="editSlot2Input-@review.Id" accept=".jpg,.jpeg,.png" class="d-none" />
+                                                            <div class="upload-box" id="editSlot2Box-@review.Id">
+                                                                <i class="fas fa-plus"></i>
+                                                                <small>Ảnh 2</small>
+                                                            </div>
+                                                            <img id="editSlot2Preview-@review.Id" class="upload-preview d-none" alt="" />
+                                                            <button type="button" class="upload-remove d-none" data-slot="editSlot2-@review.Id">&times;</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer border-secondary">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                <button type="submit" class="btn btn-warning">
+                                                    <i class="fas fa-save me-1"></i>Lưu chỉnh sửa
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        }
                     }
                 }
                 else
@@ -92,6 +477,372 @@
     </div>
 </section>
 
+<!-- Upload slot styles -->
+<style>
+    .image-upload-slot {
+        position: relative;
+        width: 100px;
+        height: 100px;
+    }
+    .upload-box {
+        width: 100px;
+        height: 100px;
+        border: 2px dashed rgba(255,255,255,0.2);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: border-color 0.2s, background 0.2s;
+        color: rgba(255,255,255,0.4);
+        gap: 4px;
+    }
+    .upload-box:hover {
+        border-color: var(--accent-color, #ff6b35);
+        background: rgba(255,107,53,0.05);
+        color: var(--accent-color, #ff6b35);
+    }
+    .upload-box i { font-size: 1.4rem; }
+    .upload-box small { font-size: 0.7rem; }
+    .upload-preview {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 2px solid rgba(255,255,255,0.15);
+    }
+    .upload-remove {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #dc3545;
+        color: #fff;
+        border: none;
+        font-size: 14px;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+    }
+</style>
+
 @section Scripts {
     <script src="~/js/cart.js"></script>
+    <script>
+        (function () {
+            // ═══════════════════════════════════════════════
+            // Star Rating (works for both add form & edit modals)
+            // ═══════════════════════════════════════════════
+            document.querySelectorAll('.star-rating-input').forEach(container => {
+                const targetId = container.dataset.target;
+                const hiddenInput = document.getElementById(targetId);
+                const stars = container.querySelectorAll('i[data-value]');
+                const errorEl = document.querySelector(`[data-rating-error="${targetId}"]`);
+                const initial = parseInt(container.dataset.initial) || 0;
+
+                function highlight(value) {
+                    stars.forEach(s => {
+                        const v = parseInt(s.dataset.value);
+                        s.classList.toggle('fas', v <= value);
+                        s.classList.toggle('far', v > value);
+                        s.style.color = v <= value ? '#ffc107' : '';
+                    });
+                }
+
+                // Set initial state
+                if (initial > 0) highlight(initial);
+
+                stars.forEach(star => {
+                    star.addEventListener('mouseenter', () => highlight(parseInt(star.dataset.value)));
+                    star.addEventListener('click', () => {
+                        hiddenInput.value = star.dataset.value;
+                        highlight(parseInt(star.dataset.value));
+                        if (errorEl) errorEl.classList.add('d-none');
+                    });
+                });
+                container.addEventListener('mouseleave', () => highlight(parseInt(hiddenInput.value) || 0));
+            });
+
+            // ═══════════════════════════════════════════════
+            // Image Upload Slots (click-to-open, preview, remove)
+            // ═══════════════════════════════════════════════
+            const maxSize = 2 * 1024 * 1024;
+            const allowedTypes = ['image/jpeg', 'image/png'];
+
+            document.querySelectorAll('.image-upload-slot').forEach(slot => {
+                const inputId = slot.dataset.input;
+                const input = document.getElementById(inputId);
+                if (!input) return;
+
+                const boxId = inputId.replace('Input', 'Box');
+                const previewId = inputId.replace('Input', 'Preview');
+                const slotName = inputId.replace('Input', '');
+
+                const box = document.getElementById(boxId);
+                const preview = document.getElementById(previewId);
+                const removeBtn = slot.querySelector(`[data-slot="${slotName}"]`);
+
+                // Click box → open file picker
+                if (box) {
+                    box.addEventListener('click', () => input.click());
+                }
+
+                // File selected → validate & preview
+                input.addEventListener('change', function () {
+                    const file = this.files[0];
+                    if (!file) return;
+
+                    if (file.size > maxSize) {
+                        alert(`File "${file.name}" vượt quá 2MB.`);
+                        this.value = '';
+                        return;
+                    }
+                    if (!allowedTypes.includes(file.type)) {
+                        alert(`File "${file.name}" không hỗ trợ. Chỉ chấp nhận .jpg, .png.`);
+                        this.value = '';
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        if (preview) {
+                            preview.src = e.target.result;
+                            preview.classList.remove('d-none');
+                        }
+                        if (box) box.classList.add('d-none');
+                        if (removeBtn) removeBtn.classList.remove('d-none');
+                    };
+                    reader.readAsDataURL(file);
+                });
+
+                // Remove button → clear
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', () => {
+                        input.value = '';
+                        if (preview) {
+                            preview.src = '';
+                            preview.classList.add('d-none');
+                        }
+                        if (box) box.classList.remove('d-none');
+                        removeBtn.classList.add('d-none');
+                    });
+                }
+            });
+
+            // ═══════════════════════════════════════════════
+            // Form validation (add form only — check rating)
+            // ═══════════════════════════════════════════════
+            const addForm = document.getElementById('reviewForm');
+            if (addForm) {
+                addForm.addEventListener('submit', function (e) {
+                    const rating = parseInt(document.getElementById('addRatingValue')?.value);
+                    if (!rating || rating < 1 || rating > 5) {
+                        e.preventDefault();
+                        const err = document.querySelector('[data-rating-error="addRatingValue"]');
+                        if (err) err.classList.remove('d-none');
+                    }
+                });
+            }
+        })();
+    </script>
+
+    @* ═══════════════════════════════════════════════════════ *@
+    @* SIGNALR: Real-time review updates                       *@
+    @* ═══════════════════════════════════════════════════════ *@
+    <script>
+        (function () {
+            const carId = @(Model.Car?.Id ?? 0);
+            const currentUserId = '@(Model.CurrentUserId ?? "")';
+            if (!carId) return;
+
+            // ── Connect to ReviewHub ──
+            const conn = new signalR.HubConnectionBuilder()
+                .withUrl('/hubs/review')
+                .withAutomaticReconnect()
+                .build();
+
+            // ── Helper: render star HTML ──
+            function starsHtml(rating, size) {
+                size = size || '0.9rem';
+                let html = '';
+                for (let i = 1; i <= 5; i++) {
+                    html += `<i class="fas fa-star ${i <= rating ? 'text-warning' : 'text-muted'}" style="font-size:${size};"></i>`;
+                }
+                return html;
+            }
+
+            // ── Helper: update avg rating display ──
+            function updateAvgRating(avg) {
+                const avgBlock = document.querySelector('.star-rating');
+                if (!avgBlock) return;
+                let html = '';
+                for (let i = 1; i <= 5; i++) {
+                    if (i <= Math.floor(avg)) html += '<i class="fas fa-star text-warning"></i>';
+                    else if (i - 0.5 <= avg) html += '<i class="fas fa-star-half-alt text-warning"></i>';
+                    else html += '<i class="far fa-star text-muted"></i>';
+                }
+                avgBlock.innerHTML = html;
+                // Update text
+                const span = avgBlock.nextElementSibling;
+                if (span) {
+                    const count = document.querySelectorAll('.review-card:not(.d-none)').length;
+                    span.textContent = `(${avg.toFixed(1)}) · ${count} đánh giá`;
+                }
+            }
+
+            // ── Helper: update review count in heading ──
+            function updateReviewCount() {
+                const countSpan = document.querySelector('h3 .text-muted.fs-6');
+                if (countSpan) {
+                    const count = document.querySelectorAll('.review-card:not(.d-none)').length;
+                    countSpan.textContent = `(${count})`;
+                }
+            }
+
+            // ── Helper: build review card HTML ──
+            function buildReviewCard(r) {
+                let avatarHtml;
+                if (r.userAvatar) {
+                    avatarHtml = `<img src="${r.userAvatar}" alt="" class="rounded-circle" style="width:36px;height:36px;object-fit:cover;" />`;
+                } else {
+                    avatarHtml = `<div class="rounded-circle bg-accent d-flex align-items-center justify-content-center" style="width:36px;height:36px;"><i class="fas fa-user text-white"></i></div>`;
+                }
+
+                let editedBadge = '';
+                if (r.isEdited) {
+                    editedBadge = `<span class="badge bg-secondary small" title="Đã chỉnh sửa${r.updatedAt ? ' lúc ' + r.updatedAt : ''}"><i class="fas fa-edit me-1"></i>Đã chỉnh sửa</span>`;
+                }
+
+                let imagesHtml = '';
+                if (r.imageUrls && r.imageUrls.length > 0) {
+                    imagesHtml = '<div class="d-flex gap-2 mt-2">';
+                    r.imageUrls.forEach(url => {
+                        imagesHtml += `<a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="Review image" class="rounded" style="width:120px;height:90px;object-fit:cover;border:1px solid rgba(255,255,255,0.1);cursor:zoom-in;" /></a>`;
+                    });
+                    imagesHtml += '</div>';
+                }
+
+                let flagHtml = '';
+                if (r.isAiFlagged && currentUserId === r.userId) {
+                    flagHtml = `<div class="alert alert-danger py-2 mt-2 mb-0 small" style="border-left:3px solid #dc3545;">
+                        <i class="fas fa-robot me-1"></i>⚠️ Hệ thống tự động phát hiện ngôn từ không phù hợp. Đánh giá này hiện <strong>chỉ hiển thị với bạn</strong>.
+                        ${r.aiFlagReason ? '<br/><small class="text-muted">Lý do: ' + r.aiFlagReason + '</small>' : ''}
+                    </div>`;
+                }
+
+                return `<div class="review-card mb-4 p-3 rounded-3" data-review-id="${r.id}" data-user-id="${r.userId}" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            ${avatarHtml}
+                            <strong>${r.userName}</strong>
+                            ${editedBadge}
+                        </div>
+                        <span class="text-muted small">${r.createdDate}</span>
+                    </div>
+                    <div class="star-rating mb-2">${starsHtml(r.rating)}</div>
+                    ${r.comment ? `<p class="mb-2">${r.comment}</p>` : ''}
+                    ${imagesHtml}
+                    ${flagHtml}
+                </div>`;
+            }
+
+            // ═══════════════════════════════════════
+            // EVENT: ReviewAdded
+            // ═══════════════════════════════════════
+            conn.on('ReviewAdded', function (data) {
+                // If flagged and not the author → skip (shadowban)
+                if (data.isAiFlagged && currentUserId !== data.userId) return;
+
+                // Remove "no reviews" message
+                const noReview = document.querySelector('.mt-5 p.text-muted');
+                if (noReview && noReview.textContent.includes('Chưa có đánh giá')) {
+                    noReview.remove();
+                }
+
+                // Check if review card already exists (guard against double-render)
+                if (document.querySelector(`[data-review-id="${data.id}"]`)) return;
+
+                const container = document.querySelector('.mt-5 hr');
+                if (container) {
+                    const html = buildReviewCard(data);
+                    container.insertAdjacentHTML('afterend', html);
+                }
+
+                if (typeof data.averageRating === 'number') updateAvgRating(data.averageRating);
+                updateReviewCount();
+            });
+
+            // ═══════════════════════════════════════
+            // EVENT: ReviewUpdated
+            // ═══════════════════════════════════════
+            conn.on('ReviewUpdated', function (data) {
+                const card = document.querySelector(`[data-review-id="${data.id}"]`);
+                if (card) {
+                    // If now flagged and not the author → hide
+                    if (data.isAiFlagged && currentUserId !== data.userId) {
+                        card.classList.add('d-none');
+                    } else {
+                        card.outerHTML = buildReviewCard(data);
+                    }
+                } else if (!data.isAiFlagged || currentUserId === data.userId) {
+                    // Card didn't exist before (was hidden), now insert it
+                    const hr = document.querySelector('.mt-5 hr');
+                    if (hr) hr.insertAdjacentHTML('afterend', buildReviewCard(data));
+                }
+
+                if (typeof data.averageRating === 'number') updateAvgRating(data.averageRating);
+                updateReviewCount();
+            });
+
+            // ═══════════════════════════════════════
+            // EVENT: ReviewVisibilityChanged (admin toggle)
+            // ═══════════════════════════════════════
+            conn.on('ReviewVisibilityChanged', function (data) {
+                const card = document.querySelector(`[data-review-id="${data.reviewId}"]`);
+                if (card) {
+                    if (data.isDeleted) {
+                        card.classList.add('d-none');
+                    } else {
+                        card.classList.remove('d-none');
+                    }
+                }
+                if (typeof data.averageRating === 'number') updateAvgRating(data.averageRating);
+                updateReviewCount();
+            });
+
+            // ═══════════════════════════════════════
+            // EVENT: ReviewApproved (admin approves AI-flagged)
+            // ═══════════════════════════════════════
+            conn.on('ReviewApproved', function (data) {
+                // After approval the review is now clean — it should be visible to everyone
+                // The page will need a reload for a full re-render since the review wasn't in DOM for other users
+                // But we update avg rating immediately
+                if (typeof data.averageRating === 'number') updateAvgRating(data.averageRating);
+
+                // If the card is on the page (user is the author), remove the AI flag warning
+                const card = document.querySelector(`[data-review-id="${data.reviewId}"]`);
+                if (card) {
+                    const alertBox = card.querySelector('.alert-danger');
+                    if (alertBox) alertBox.remove();
+                }
+                updateReviewCount();
+            });
+
+            // ── Start connection + join car group ──
+            conn.start()
+                .then(() => {
+                    console.log('ReviewHub connected');
+                    return conn.invoke('JoinCarGroup', carId);
+                })
+                .then(() => console.log('Joined car-' + carId))
+                .catch(err => console.log('ReviewHub error:', err));
+        })();
+    </script>
+    <script src="~/js/testdrive.js" asp-append-version="true"></script>
 }

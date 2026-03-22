@@ -1,0 +1,369 @@
+@page
+@model HyperCar.Web.Pages.Admin.ReviewsModel
+@{
+    ViewData["Title"] = "Quản lý đánh giá";
+}
+
+<section class="pt-5 mt-5">
+    <div class="container-fluid py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold"><i class="fas fa-comments me-2 text-accent"></i>Quản lý đánh giá</h2>
+            <span class="badge bg-secondary fs-6" id="reviewCountBadge">@Model.AllReviews.Count() đánh giá</span>
+        </div>
+
+        <!-- Flash Messages -->
+        @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>@Model.SuccessMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>@Model.ErrorMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <div class="table-responsive">
+            <table class="table table-dark table-hover align-middle" id="reviewsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Người dùng</th>
+                        <th>Xe</th>
+                        <th>Đánh giá</th>
+                        <th>Nhận xét</th>
+                        <th>Ảnh</th>
+                        <th>Ngày tạo</th>
+                        <th>Trạng thái</th>
+                        <th class="text-center">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="reviewsTableBody">
+                    @foreach (var review in Model.AllReviews)
+                    {
+                        var rowClass = review.IsAiFlagged ? "table-danger" : review.IsDeleted ? "opacity-50" : "";
+                        <tr class="@rowClass" data-review-id="@review.Id" data-car-id="@review.CarId">
+                            <td><strong>#@review.Id</strong></td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    @if (!string.IsNullOrEmpty(review.UserAvatar))
+                                    {
+                                        <img src="@review.UserAvatar" class="rounded-circle" style="width:32px;height:32px;object-fit:cover;" />
+                                    }
+                                    <span>@review.UserName</span>
+                                </div>
+                            </td>
+                            <td>@review.CarName</td>
+                            <td>
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <i class="fas fa-star @(i <= review.Rating ? "text-warning" : "text-muted")" style="font-size:0.8rem;"></i>
+                                }
+                            </td>
+                            <td>
+                                <div style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@review.Comment">
+                                    @(review.Comment ?? "—")
+                                </div>
+                                @if (review.IsAiFlagged && !string.IsNullOrEmpty(review.AiFlagReason))
+                                {
+                                    <div class="mt-1">
+                                        <small class="text-danger">
+                                            <i class="fas fa-robot me-1"></i>AI: @review.AiFlagReason
+                                        </small>
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                @if (review.ImageUrls?.Any() == true)
+                                {
+                                    <div class="d-flex gap-1">
+                                        @foreach (var imgUrl in review.ImageUrls)
+                                        {
+                                            <a href="@imgUrl" target="_blank" rel="noopener">
+                                                <img src="@imgUrl" alt="" class="rounded" style="width:48px;height:36px;object-fit:cover;" />
+                                            </a>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td>@review.CreatedDate.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="review-status">
+                                @if (review.IsAiFlagged)
+                                {
+                                    <span class="badge bg-danger"><i class="fas fa-robot me-1"></i>AI Flagged</span>
+                                }
+                                else if (review.IsDeleted)
+                                {
+                                    <span class="badge bg-secondary"><i class="fas fa-eye-slash me-1"></i>Đã ẩn</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success"><i class="fas fa-eye me-1"></i>Hiển thị</span>
+                                }
+                            </td>
+                            <td class="text-center review-actions">
+                                <div class="d-flex gap-1 justify-content-center">
+                                    @if (review.IsAiFlagged)
+                                    {
+                                        <form method="post" asp-page-handler="Approve" style="display:inline;">
+                                            <input type="hidden" name="reviewId" value="@review.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-success" title="Phê duyệt (gỡ cờ AI)">
+                                                <i class="fas fa-check me-1"></i>Duyệt
+                                            </button>
+                                        </form>
+                                    }
+                                    <form method="post" asp-page-handler="Toggle" style="display:inline;">
+                                        <input type="hidden" name="reviewId" value="@review.Id" />
+                                        @if (review.IsDeleted)
+                                        {
+                                            <button type="submit" class="btn btn-sm btn-outline-success" title="Hiển thị lại">
+                                                <i class="fas fa-eye me-1"></i>Hiện
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Ẩn đánh giá">
+                                                <i class="fas fa-eye-slash me-1"></i>Ẩn
+                                            </button>
+                                        }
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (!Model.AllReviews.Any())
+        {
+            <div class="text-center py-5" id="noReviewsMsg">
+                <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Chưa có đánh giá nào trong hệ thống.</p>
+            </div>
+        }
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            // ── Connect to ReviewHub (admin auto-joins AdminReviews group) ──
+            const conn = new signalR.HubConnectionBuilder()
+                .withUrl('/hubs/review')
+                .withAutomaticReconnect()
+                .build();
+
+            // ── Helper: stars HTML ──
+            function starsHtml(rating) {
+                let html = '';
+                for (let i = 1; i <= 5; i++) {
+                    html += `<i class="fas fa-star ${i <= rating ? 'text-warning' : 'text-muted'}" style="font-size:0.8rem;"></i>`;
+                }
+                return html;
+            }
+
+            // ── Helper: update total count badge ──
+            function updateCount() {
+                const badge = document.getElementById('reviewCountBadge');
+                if (badge) {
+                    const rows = document.querySelectorAll('#reviewsTableBody tr');
+                    badge.textContent = rows.length + ' đánh giá';
+                }
+            }
+
+            // ── Helper: build admin table row ──
+            function buildRow(r) {
+                const rowClass = r.isAiFlagged ? 'table-danger' : r.isDeleted ? 'opacity-50' : '';
+                const avatarHtml = r.userAvatar
+                    ? `<img src="${r.userAvatar}" class="rounded-circle" style="width:32px;height:32px;object-fit:cover;" />`
+                    : '';
+
+                let commentCell = `<div style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.comment || ''}">${r.comment || '—'}</div>`;
+                if (r.isAiFlagged && r.aiFlagReason) {
+                    commentCell += `<div class="mt-1"><small class="text-danger"><i class="fas fa-robot me-1"></i>AI: ${r.aiFlagReason}</small></div>`;
+                }
+
+                let imagesHtml = '<span class="text-muted">—</span>';
+                if (r.imageUrls && r.imageUrls.length > 0) {
+                    imagesHtml = '<div class="d-flex gap-1">';
+                    r.imageUrls.forEach(url => {
+                        imagesHtml += `<a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="" class="rounded" style="width:48px;height:36px;object-fit:cover;" /></a>`;
+                    });
+                    imagesHtml += '</div>';
+                }
+
+                let statusBadge, actionsHtml;
+                if (r.isAiFlagged) {
+                    statusBadge = '<span class="badge bg-danger"><i class="fas fa-robot me-1"></i>AI Flagged</span>';
+                    actionsHtml = `<div class="d-flex gap-1 justify-content-center">
+                        <form method="post" action="?handler=Approve" style="display:inline;">
+                            <input type="hidden" name="reviewId" value="${r.id}" />
+                            <input type="hidden" name="__RequestVerificationToken" value="${document.querySelector('input[name=__RequestVerificationToken]')?.value || ''}" />
+                            <button type="submit" class="btn btn-sm btn-outline-success" title="Phê duyệt (gỡ cờ AI)"><i class="fas fa-check me-1"></i>Duyệt</button>
+                        </form>
+                        <form method="post" action="?handler=Toggle" style="display:inline;">
+                            <input type="hidden" name="reviewId" value="${r.id}" />
+                            <input type="hidden" name="__RequestVerificationToken" value="${document.querySelector('input[name=__RequestVerificationToken]')?.value || ''}" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Ẩn đánh giá"><i class="fas fa-eye-slash me-1"></i>Ẩn</button>
+                        </form>
+                    </div>`;
+                } else if (r.isDeleted) {
+                    statusBadge = '<span class="badge bg-secondary"><i class="fas fa-eye-slash me-1"></i>Đã ẩn</span>';
+                    actionsHtml = `<div class="d-flex gap-1 justify-content-center">
+                        <form method="post" action="?handler=Toggle" style="display:inline;">
+                            <input type="hidden" name="reviewId" value="${r.id}" />
+                            <input type="hidden" name="__RequestVerificationToken" value="${document.querySelector('input[name=__RequestVerificationToken]')?.value || ''}" />
+                            <button type="submit" class="btn btn-sm btn-outline-success" title="Hiển thị lại"><i class="fas fa-eye me-1"></i>Hiện</button>
+                        </form>
+                    </div>`;
+                } else {
+                    statusBadge = '<span class="badge bg-success"><i class="fas fa-eye me-1"></i>Hiển thị</span>';
+                    actionsHtml = `<div class="d-flex gap-1 justify-content-center">
+                        <form method="post" action="?handler=Toggle" style="display:inline;">
+                            <input type="hidden" name="reviewId" value="${r.id}" />
+                            <input type="hidden" name="__RequestVerificationToken" value="${document.querySelector('input[name=__RequestVerificationToken]')?.value || ''}" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Ẩn đánh giá"><i class="fas fa-eye-slash me-1"></i>Ẩn</button>
+                        </form>
+                    </div>`;
+                }
+
+                const createdDate = r.createdDate || '';
+
+                return `<tr class="${rowClass}" data-review-id="${r.id}" data-car-id="${r.carId}">
+                    <td><strong>#${r.id}</strong></td>
+                    <td><div class="d-flex align-items-center gap-2">${avatarHtml}<span>${r.userName}</span></div></td>
+                    <td>${r.carName || ''}</td>
+                    <td>${starsHtml(r.rating)}</td>
+                    <td>${commentCell}</td>
+                    <td>${imagesHtml}</td>
+                    <td>${createdDate}</td>
+                    <td class="review-status">${statusBadge}</td>
+                    <td class="text-center review-actions">${actionsHtml}</td>
+                </tr>`;
+            }
+
+            // ═══════════════════════════════════════
+            // EVENT: ReviewAdded — new review from customer
+            // ═══════════════════════════════════════
+            conn.on('ReviewAdded', function (data) {
+                // Remove "no reviews" message
+                const noMsg = document.getElementById('noReviewsMsg');
+                if (noMsg) noMsg.remove();
+
+                // Guard against duplicates
+                if (document.querySelector(`#reviewsTableBody tr[data-review-id="${data.id}"]`)) return;
+
+                const tbody = document.getElementById('reviewsTableBody');
+                if (tbody) {
+                    tbody.insertAdjacentHTML('afterbegin', buildRow(data));
+                }
+                updateCount();
+            });
+
+            // ═══════════════════════════════════════
+            // EVENT: ReviewUpdated — customer edited their review
+            // ═══════════════════════════════════════
+            conn.on('ReviewUpdated', function (data) {
+                const row = document.querySelector(`#reviewsTableBody tr[data-review-id="${data.id}"]`);
+                if (row) {
+                    row.outerHTML = buildRow(data);
+                }
+                updateCount();
+            });
+
+            // ═══════════════════════════════════════
+            // EVENT: ReviewVisibilityChanged — admin toggled
+            // ═══════════════════════════════════════
+            conn.on('ReviewVisibilityChanged', function (data) {
+                const row = document.querySelector(`#reviewsTableBody tr[data-review-id="${data.reviewId}"]`);
+                if (!row) return;
+
+                // Update row class
+                row.className = data.isDeleted ? 'opacity-50' : '';
+
+                // Update status badge
+                const statusCell = row.querySelector('.review-status');
+                if (statusCell) {
+                    statusCell.innerHTML = data.isDeleted
+                        ? '<span class="badge bg-secondary"><i class="fas fa-eye-slash me-1"></i>Đã ẩn</span>'
+                        : '<span class="badge bg-success"><i class="fas fa-eye me-1"></i>Hiển thị</span>';
+                }
+
+                // Update action buttons
+                const actionsCell = row.querySelector('.review-actions');
+                if (actionsCell) {
+                    const token = document.querySelector('input[name=__RequestVerificationToken]')?.value || '';
+                    if (data.isDeleted) {
+                        actionsCell.innerHTML = `<div class="d-flex gap-1 justify-content-center">
+                            <form method="post" action="?handler=Toggle" style="display:inline;">
+                                <input type="hidden" name="reviewId" value="${data.reviewId}" />
+                                <input type="hidden" name="__RequestVerificationToken" value="${token}" />
+                                <button type="submit" class="btn btn-sm btn-outline-success" title="Hiển thị lại"><i class="fas fa-eye me-1"></i>Hiện</button>
+                            </form>
+                        </div>`;
+                    } else {
+                        actionsCell.innerHTML = `<div class="d-flex gap-1 justify-content-center">
+                            <form method="post" action="?handler=Toggle" style="display:inline;">
+                                <input type="hidden" name="reviewId" value="${data.reviewId}" />
+                                <input type="hidden" name="__RequestVerificationToken" value="${token}" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Ẩn đánh giá"><i class="fas fa-eye-slash me-1"></i>Ẩn</button>
+                            </form>
+                        </div>`;
+                    }
+                }
+            });
+
+            // ═══════════════════════════════════════
+            // EVENT: ReviewApproved — admin approved AI-flagged review
+            // ═══════════════════════════════════════
+            conn.on('ReviewApproved', function (data) {
+                const row = document.querySelector(`#reviewsTableBody tr[data-review-id="${data.reviewId}"]`);
+                if (!row) return;
+
+                // Update row class (no longer flagged)
+                row.className = '';
+
+                // Update status badge
+                const statusCell = row.querySelector('.review-status');
+                if (statusCell) {
+                    statusCell.innerHTML = '<span class="badge bg-success"><i class="fas fa-eye me-1"></i>Hiển thị</span>';
+                }
+
+                // Remove AI reason text
+                const aiReason = row.querySelector('.text-danger small, small.text-danger');
+                if (aiReason) {
+                    const parent = aiReason.closest('div.mt-1') || aiReason;
+                    parent.remove();
+                }
+
+                // Update actions (remove approve button, show only toggle)
+                const actionsCell = row.querySelector('.review-actions');
+                if (actionsCell) {
+                    const token = document.querySelector('input[name=__RequestVerificationToken]')?.value || '';
+                    actionsCell.innerHTML = `<div class="d-flex gap-1 justify-content-center">
+                        <form method="post" action="?handler=Toggle" style="display:inline;">
+                            <input type="hidden" name="reviewId" value="${data.reviewId}" />
+                            <input type="hidden" name="__RequestVerificationToken" value="${token}" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Ẩn đánh giá"><i class="fas fa-eye-slash me-1"></i>Ẩn</button>
+                        </form>
+                    </div>`;
+                }
+            });
+
+            // ── Start connection ──
+            conn.start()
+                .then(() => console.log('Admin ReviewHub connected'))
+                .catch(err => console.log('Admin ReviewHub error:', err));
+        })();
+    </script>
+}
+

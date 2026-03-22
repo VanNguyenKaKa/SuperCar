@@ -58,6 +58,7 @@ namespace HyperCar.Web
 
             app.MapRazorPages();
             app.MapHub<NotificationHub>("/hubs/notification");
+            app.MapHub<ReviewHub>("/hubs/review");
 
             // ===== AI Chatbot API =====
             app.MapPost("/api/chat", async (ChatRequestDto request, IAIChatService chatService, HttpContext ctx) =>

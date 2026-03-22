@@ -60,11 +60,17 @@ namespace HyperCar.DAL.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsBannedFromBooking")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("NoShowCount")
+                        .HasColumnType("int");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -153,7 +159,7 @@ namespace HyperCar.DAL.Migrations
                         {
                             Id = 1,
                             Country = "France",
-                            CreatedDate = new DateTime(2026, 2, 28, 17, 31, 41, 156, DateTimeKind.Utc).AddTicks(781),
+                            CreatedDate = new DateTime(2026, 3, 22, 12, 48, 38, 324, DateTimeKind.Utc).AddTicks(7718),
                             Description = "French luxury hypercar manufacturer",
                             IsActive = true,
                             Name = "Bugatti"
@@ -162,7 +168,7 @@ namespace HyperCar.DAL.Migrations
                         {
                             Id = 2,
                             Country = "Sweden",
-                            CreatedDate = new DateTime(2026, 2, 28, 17, 31, 41, 156, DateTimeKind.Utc).AddTicks(789),
+                            CreatedDate = new DateTime(2026, 3, 22, 12, 48, 38, 324, DateTimeKind.Utc).AddTicks(7777),
                             Description = "Swedish hypercar manufacturer",
                             IsActive = true,
                             Name = "Koenigsegg"
@@ -171,7 +177,7 @@ namespace HyperCar.DAL.Migrations
                         {
                             Id = 3,
                             Country = "Italy",
-                            CreatedDate = new DateTime(2026, 2, 28, 17, 31, 41, 156, DateTimeKind.Utc).AddTicks(790),
+                            CreatedDate = new DateTime(2026, 3, 22, 12, 48, 38, 324, DateTimeKind.Utc).AddTicks(7779),
                             Description = "Italian hypercar manufacturer",
                             IsActive = true,
                             Name = "Pagani"
@@ -180,7 +186,7 @@ namespace HyperCar.DAL.Migrations
                         {
                             Id = 4,
                             Country = "United Kingdom",
-                            CreatedDate = new DateTime(2026, 2, 28, 17, 31, 41, 156, DateTimeKind.Utc).AddTicks(791),
+                            CreatedDate = new DateTime(2026, 3, 22, 12, 48, 38, 324, DateTimeKind.Utc).AddTicks(7780),
                             Description = "British supercar manufacturer",
                             IsActive = true,
                             Name = "McLaren"
@@ -189,7 +195,7 @@ namespace HyperCar.DAL.Migrations
                         {
                             Id = 5,
                             Country = "Italy",
-                            CreatedDate = new DateTime(2026, 2, 28, 17, 31, 41, 156, DateTimeKind.Utc).AddTicks(792),
+                            CreatedDate = new DateTime(2026, 3, 22, 12, 48, 38, 324, DateTimeKind.Utc).AddTicks(7782),
                             Description = "Italian luxury sports car manufacturer",
                             IsActive = true,
                             Name = "Ferrari"
@@ -198,7 +204,7 @@ namespace HyperCar.DAL.Migrations
                         {
                             Id = 6,
                             Country = "Italy",
-                            CreatedDate = new DateTime(2026, 2, 28, 17, 31, 41, 156, DateTimeKind.Utc).AddTicks(793),
+                            CreatedDate = new DateTime(2026, 3, 22, 12, 48, 38, 324, DateTimeKind.Utc).AddTicks(7783),
                             Description = "Italian luxury sports car manufacturer",
                             IsActive = true,
                             Name = "Lamborghini"
@@ -207,7 +213,7 @@ namespace HyperCar.DAL.Migrations
                         {
                             Id = 7,
                             Country = "Croatia",
-                            CreatedDate = new DateTime(2026, 2, 28, 17, 31, 41, 156, DateTimeKind.Utc).AddTicks(795),
+                            CreatedDate = new DateTime(2026, 3, 22, 12, 48, 38, 324, DateTimeKind.Utc).AddTicks(7785),
                             Description = "Croatian electric hypercar manufacturer",
                             IsActive = true,
                             Name = "Rimac"
@@ -216,7 +222,7 @@ namespace HyperCar.DAL.Migrations
                         {
                             Id = 8,
                             Country = "United Kingdom",
-                            CreatedDate = new DateTime(2026, 2, 28, 17, 31, 41, 156, DateTimeKind.Utc).AddTicks(796),
+                            CreatedDate = new DateTime(2026, 3, 22, 12, 48, 38, 324, DateTimeKind.Utc).AddTicks(7786),
                             Description = "British luxury car manufacturer",
                             IsActive = true,
                             Name = "Aston Martin"
@@ -233,6 +239,9 @@ namespace HyperCar.DAL.Migrations
 
                     b.Property<decimal>("Acceleration")
                         .HasColumnType("decimal(5,2)");
+
+                    b.Property<double>("AverageRating")
+                        .HasColumnType("float");
 
                     b.Property<int>("BrandId")
                         .HasColumnType("int");
@@ -302,9 +311,10 @@ namespace HyperCar.DAL.Migrations
                         {
                             Id = 1,
                             Acceleration = 2.4m,
+                            AverageRating = 0.0,
                             BrandId = 1,
                             Category = "HyperCar",
-                            CreatedDate = new DateTime(2026, 2, 28, 17, 31, 41, 156, DateTimeKind.Utc).AddTicks(825),
+                            CreatedDate = new DateTime(2026, 3, 22, 12, 48, 38, 324, DateTimeKind.Utc).AddTicks(7844),
                             Description = "The Bugatti Chiron Super Sport is the ultimate expression of speed and luxury.",
                             Engine = "8.0L Quad-Turbo W16",
                             HorsePower = 1578,
@@ -319,9 +329,10 @@ namespace HyperCar.DAL.Migrations
                         {
                             Id = 2,
                             Acceleration = 2.5m,
+                            AverageRating = 0.0,
                             BrandId = 2,
                             Category = "HyperCar",
-                            CreatedDate = new DateTime(2026, 2, 28, 17, 31, 41, 156, DateTimeKind.Utc).AddTicks(836),
+                            CreatedDate = new DateTime(2026, 3, 22, 12, 48, 38, 324, DateTimeKind.Utc).AddTicks(7870),
                             Description = "The fastest Koenigsegg ever made, designed for maximum speed.",
                             Engine = "5.0L Twin-Turbo V8",
                             HorsePower = 1600,
@@ -336,9 +347,10 @@ namespace HyperCar.DAL.Migrations
                         {
                             Id = 3,
                             Acceleration = 2.7m,
+                            AverageRating = 0.0,
                             BrandId = 3,
                             Category = "HyperCar",
-                            CreatedDate = new DateTime(2026, 2, 28, 17, 31, 41, 156, DateTimeKind.Utc).AddTicks(839),
+                            CreatedDate = new DateTime(2026, 3, 22, 12, 48, 38, 324, DateTimeKind.Utc).AddTicks(7875),
                             Description = "Track-focused masterpiece from Pagani with a naturally aspirated V12.",
                             Engine = "6.0L NA V12",
                             HorsePower = 850,
@@ -353,9 +365,10 @@ namespace HyperCar.DAL.Migrations
                         {
                             Id = 4,
                             Acceleration = 2.5m,
+                            AverageRating = 0.0,
                             BrandId = 4,
                             Category = "HyperGT",
-                            CreatedDate = new DateTime(2026, 2, 28, 17, 31, 41, 156, DateTimeKind.Utc).AddTicks(841),
+                            CreatedDate = new DateTime(2026, 3, 22, 12, 48, 38, 324, DateTimeKind.Utc).AddTicks(7952),
                             Description = "McLaren's fastest car ever — a hyper-GT with a central driving position.",
                             Engine = "4.0L Twin-Turbo V8 Hybrid",
                             HorsePower = 1055,
@@ -370,9 +383,10 @@ namespace HyperCar.DAL.Migrations
                         {
                             Id = 5,
                             Acceleration = 2.5m,
+                            AverageRating = 0.0,
                             BrandId = 5,
                             Category = "SuperCar",
-                            CreatedDate = new DateTime(2026, 2, 28, 17, 31, 41, 156, DateTimeKind.Utc).AddTicks(843),
+                            CreatedDate = new DateTime(2026, 3, 22, 12, 48, 38, 324, DateTimeKind.Utc).AddTicks(7956),
                             Description = "Ferrari's first plug-in hybrid, blending extreme performance with innovation.",
                             Engine = "4.0L Twin-Turbo V8 Hybrid",
                             HorsePower = 986,
@@ -387,9 +401,10 @@ namespace HyperCar.DAL.Migrations
                         {
                             Id = 6,
                             Acceleration = 2.5m,
+                            AverageRating = 0.0,
                             BrandId = 6,
                             Category = "SuperCar",
-                            CreatedDate = new DateTime(2026, 2, 28, 17, 31, 41, 156, DateTimeKind.Utc).AddTicks(845),
+                            CreatedDate = new DateTime(2026, 3, 22, 12, 48, 38, 324, DateTimeKind.Utc).AddTicks(7960),
                             Description = "Lamborghini's V12 hybrid flagship with 1015 combined horsepower.",
                             Engine = "6.5L NA V12 Hybrid",
                             HorsePower = 1015,
@@ -404,9 +419,10 @@ namespace HyperCar.DAL.Migrations
                         {
                             Id = 7,
                             Acceleration = 1.85m,
+                            AverageRating = 0.0,
                             BrandId = 7,
                             Category = "Electric HyperCar",
-                            CreatedDate = new DateTime(2026, 2, 28, 17, 31, 41, 156, DateTimeKind.Utc).AddTicks(847),
+                            CreatedDate = new DateTime(2026, 3, 22, 12, 48, 38, 324, DateTimeKind.Utc).AddTicks(7963),
                             Description = "The world's fastest production electric hypercar.",
                             Engine = "Quad Electric Motors",
                             HorsePower = 1914,
@@ -421,9 +437,10 @@ namespace HyperCar.DAL.Migrations
                         {
                             Id = 8,
                             Acceleration = 2.5m,
+                            AverageRating = 0.0,
                             BrandId = 8,
                             Category = "HyperCar",
-                            CreatedDate = new DateTime(2026, 2, 28, 17, 31, 41, 156, DateTimeKind.Utc).AddTicks(849),
+                            CreatedDate = new DateTime(2026, 3, 22, 12, 48, 38, 324, DateTimeKind.Utc).AddTicks(7970),
                             Description = "Aston Martin and Red Bull Racing's F1-inspired hypercar.",
                             Engine = "6.5L NA V12 + Electric",
                             HorsePower = 1160,
@@ -650,6 +667,10 @@ namespace HyperCar.DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AiFlagReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<int>("CarId")
                         .HasColumnType("int");
 
@@ -660,11 +681,30 @@ namespace HyperCar.DAL.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("ImageUrls")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsAiFlagged")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsEdited")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("OrderItemId")
+                        .HasColumnType("int");
+
                     b.Property<int>("Rating")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -673,6 +713,10 @@ namespace HyperCar.DAL.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CarId");
+
+                    b.HasIndex("OrderItemId")
+                        .IsUnique()
+                        .HasFilter("[OrderItemId] IS NOT NULL");
 
                     b.HasIndex("UserId", "CarId");
 
@@ -748,6 +792,89 @@ namespace HyperCar.DAL.Migrations
                     b.HasIndex("TrackingCode");
 
                     b.ToTable("Shippings");
+                });
+
+            modelBuilder.Entity("HyperCar.DAL.Entities.Showroom", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name");
+
+                    b.ToTable("Showrooms");
+                });
+
+            modelBuilder.Entity("HyperCar.DAL.Entities.TestDriveBooking", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AdminResponse")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("ApplicationUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("CarId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("ScheduledDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ShowroomId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId");
+
+                    b.HasIndex("ShowroomId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("CarId", "ScheduledDate")
+                        .IsUnique()
+                        .HasFilter("[Status] != 3");
+
+                    b.ToTable("TestDriveBookings");
                 });
 
             modelBuilder.Entity("HyperCar.DAL.Entities.TransactionHistory", b =>
@@ -1006,6 +1133,11 @@ namespace HyperCar.DAL.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("HyperCar.DAL.Entities.OrderItem", "OrderItem")
+                        .WithOne("Review")
+                        .HasForeignKey("HyperCar.DAL.Entities.Review", "OrderItemId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("HyperCar.DAL.Entities.ApplicationUser", "User")
                         .WithMany("Reviews")
                         .HasForeignKey("UserId")
@@ -1013,6 +1145,8 @@ namespace HyperCar.DAL.Migrations
                         .IsRequired();
 
                     b.Navigation("Car");
+
+                    b.Navigation("OrderItem");
 
                     b.Navigation("User");
                 });
@@ -1026,6 +1160,32 @@ namespace HyperCar.DAL.Migrations
                         .IsRequired();
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("HyperCar.DAL.Entities.TestDriveBooking", b =>
+                {
+                    b.HasOne("HyperCar.DAL.Entities.ApplicationUser", "User")
+                        .WithMany("TestDriveBookings")
+                        .HasForeignKey("ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("HyperCar.DAL.Entities.Car", "Car")
+                        .WithMany("TestDriveBookings")
+                        .HasForeignKey("CarId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("HyperCar.DAL.Entities.Showroom", "Showroom")
+                        .WithMany("TestDriveBookings")
+                        .HasForeignKey("ShowroomId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Car");
+
+                    b.Navigation("Showroom");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("HyperCar.DAL.Entities.TransactionHistory", b =>
@@ -1097,6 +1257,8 @@ namespace HyperCar.DAL.Migrations
                     b.Navigation("Orders");
 
                     b.Navigation("Reviews");
+
+                    b.Navigation("TestDriveBookings");
                 });
 
             modelBuilder.Entity("HyperCar.DAL.Entities.Brand", b =>
@@ -1109,6 +1271,8 @@ namespace HyperCar.DAL.Migrations
                     b.Navigation("OrderItems");
 
                     b.Navigation("Reviews");
+
+                    b.Navigation("TestDriveBookings");
                 });
 
             modelBuilder.Entity("HyperCar.DAL.Entities.Order", b =>
@@ -1120,6 +1284,16 @@ namespace HyperCar.DAL.Migrations
                     b.Navigation("Shipping");
 
                     b.Navigation("TransactionHistories");
+                });
+
+            modelBuilder.Entity("HyperCar.DAL.Entities.OrderItem", b =>
+                {
+                    b.Navigation("Review");
+                });
+
+            modelBuilder.Entity("HyperCar.DAL.Entities.Showroom", b =>
+                {
+                    b.Navigation("TestDriveBookings");
                 });
 #pragma warning restore 612, 618
         }

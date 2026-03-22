@@ -22,5 +22,10 @@ namespace HyperCar.DAL.Entities
 
         [ForeignKey(nameof(CarId))]
         public virtual Car Car { get; set; } = null!;
+
+        /// <summary>
+        /// Optional review for this order item (1:0..1)
+        /// </summary>
+        public virtual Review? Review { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 using HyperCar.DAL.Entities;
+using HyperCar.DAL.Enums;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,6 +23,8 @@ namespace HyperCar.DAL.Data
         public DbSet<ConversationHistory> ConversationHistories { get; set; } = null!;
         public DbSet<TransactionHistory> TransactionHistories { get; set; } = null!;
         public DbSet<ReportSnapshot> ReportSnapshots { get; set; } = null!;
+        public DbSet<TestDriveBooking> TestDriveBookings { get; set; } = null!;
+        public DbSet<Showroom> Showrooms { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -131,6 +134,11 @@ namespace HyperCar.DAL.Data
                 entity.HasKey(e => e.Id);
                 entity.HasIndex(e => new { e.UserId, e.CarId }); // Composite for lookups
 
+                // Hard DB constraint: one review per OrderItem (filtered unique index for nullable FK)
+                entity.HasIndex(e => e.OrderItemId)
+                    .IsUnique()
+                    .HasFilter("[OrderItemId] IS NOT NULL");
+
                 // User → Reviews (1:N)
                 entity.HasOne(e => e.User)
                     .WithMany(u => u.Reviews)
@@ -142,6 +150,12 @@ namespace HyperCar.DAL.Data
                     .WithMany(c => c.Reviews)
                     .HasForeignKey(e => e.CarId)
                     .OnDelete(DeleteBehavior.Cascade);
+
+                // OrderItem → Review (1:0..1)
+                entity.HasOne(e => e.OrderItem)
+                    .WithOne(oi => oi.Review)
+                    .HasForeignKey<Review>(e => e.OrderItemId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             // ===== ConversationHistory Configuration =====
@@ -175,6 +189,42 @@ namespace HyperCar.DAL.Data
             {
                 entity.HasKey(e => e.Id);
                 entity.HasIndex(e => new { e.ReportDate, e.Type });
+            });
+
+            // ===== TestDriveBooking Configuration =====
+            builder.Entity<TestDriveBooking>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => new { e.CarId, e.ScheduledDate })
+                    .IsUnique()
+                    .HasFilter($"[Status] != {(int)BookingStatus.Cancelled}");
+                entity.HasIndex(e => e.ApplicationUserId);
+                entity.HasIndex(e => e.Status);
+
+                // User → TestDriveBookings (1:N)
+                entity.HasOne(e => e.User)
+                    .WithMany(u => u.TestDriveBookings)
+                    .HasForeignKey(e => e.ApplicationUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Car → TestDriveBookings (1:N)
+                entity.HasOne(e => e.Car)
+                    .WithMany(c => c.TestDriveBookings)
+                    .HasForeignKey(e => e.CarId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Showroom → TestDriveBookings (1:N, optional)
+                entity.HasOne(e => e.Showroom)
+                    .WithMany(s => s.TestDriveBookings)
+                    .HasForeignKey(e => e.ShowroomId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // ===== Showroom Configuration =====
+            builder.Entity<Showroom>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.Name);
             });
 
             // ===== Seed Admin Role =====
