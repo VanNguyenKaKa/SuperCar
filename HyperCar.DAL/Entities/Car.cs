@@ -30,6 +30,8 @@ namespace HyperCar.DAL.Entities
 
         [MaxLength(5000)]
         public string? Description { get; set; }
+        [MaxLength(5000)]
+        public string? DescriptionVi { get; set; }
         [MaxLength(500)]
         public string? ImageUrl { get; set; }
         [MaxLength(4000)]

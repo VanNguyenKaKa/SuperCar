@@ -66,5 +66,10 @@ namespace HyperCar.BLL.Interfaces
         /// User hard-delete their own review
         /// </summary>
         Task<bool> DeleteAsync(int reviewId, string userId);
+
+        /// <summary>
+        /// Admin posts a reply to a customer review
+        /// </summary>
+        Task<ServiceResult<ReviewDto>> AdminReplyAsync(int reviewId, string adminReply);
     }
 }

@@ -136,6 +136,7 @@ namespace HyperCar.BLL.Services
                 Acceleration = dto.Acceleration,
                 Stock = dto.Stock,
                 Description = dto.Description,
+                DescriptionVi = dto.DescriptionVi,
                 ImageUrl = dto.ImageUrl,
                 ImageGallery = dto.ImageGallery,
                 Category = dto.Category,
@@ -163,6 +164,7 @@ namespace HyperCar.BLL.Services
             car.Acceleration = dto.Acceleration;
             car.Stock = dto.Stock;
             car.Description = dto.Description;
+            car.DescriptionVi = dto.DescriptionVi;
             car.ImageUrl = dto.ImageUrl;
             car.ImageGallery = dto.ImageGallery;
             car.Category = dto.Category;
@@ -226,6 +228,7 @@ namespace HyperCar.BLL.Services
             Acceleration = car.Acceleration,
             Stock = car.Stock,
             Description = car.Description,
+            DescriptionVi = car.DescriptionVi,
             ImageUrl = car.ImageUrl,
             ImageGallery = car.ImageGallery,
             Category = car.Category,

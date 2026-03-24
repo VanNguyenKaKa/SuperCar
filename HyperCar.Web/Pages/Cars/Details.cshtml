@@ -75,7 +75,7 @@
                         </div>
                     </div>
 
-                    <p>@Model.Car.Description</p>
+                    <p>@(Model.Car.DescriptionVi ?? Model.Car.Description)</p>
 
                     <div class="d-flex align-items-center gap-3 mt-4">
                         @if (Model.Car.Stock > 0)
@@ -320,7 +320,8 @@
                 {
                     @foreach (var review in Model.Reviews)
                     {
-                        <div class="review-card mb-4 p-3 rounded-3" data-review-id="@review.Id" data-user-id="@review.UserId" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                        <div class="review-card mb-4 p-3 rounded-3" data-review-id="@review.Id" data-user-id="@review.UserId"
+                             style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div class="d-flex align-items-center gap-2">
                                     @if (!string.IsNullOrEmpty(review.UserAvatar))
@@ -350,6 +351,30 @@
                                                 title="Chỉnh sửa (chỉ được 1 lần)">
                                             <i class="fas fa-edit"></i>
                                         </button>
+                                    }
+                                    @* ── Admin Controls ── *@
+                                    @if (Model.IsAdmin)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-info admin-reply-btn"
+                                                data-review-id="@review.Id" title="Trả lời">
+                                            <i class="fas fa-reply"></i>
+                                        </button>
+                                        <form method="post" asp-page-handler="AdminToggle"
+                                              asp-route-reviewId="@review.Id" asp-route-carId="@Model.Car!.Id"
+                                              style="display:inline;">
+                                            @if (review.IsDeleted)
+                                            {
+                                                <button type="submit" class="btn btn-sm btn-outline-success" title="Hiện lại">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Ẩn đánh giá">
+                                                    <i class="fas fa-eye-slash"></i>
+                                                </button>
+                                            }
+                                        </form>
                                     }
                                 </div>
                             </div>
@@ -384,6 +409,42 @@
                                     {
                                         <br /><small class="text-muted">Lý do: @review.AiFlagReason</small>
                                     }
+                                </div>
+                            }
+
+                            @* ── Admin Reply Bubble ── *@
+                            @if (!string.IsNullOrEmpty(review.AdminReply))
+                            {
+                                <div class="admin-reply-bubble mt-3 p-2 rounded-2" style="background: rgba(255,107,53,0.08); border-left: 3px solid #ff6b35;">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <i class="fas fa-shield-alt text-accent" style="font-size:0.75rem;"></i>
+                                        <small class="fw-bold text-accent">Phản hồi từ HyperCar</small>
+                                        @if (review.AdminRepliedAt.HasValue)
+                                        {
+                                            <small class="text-muted ms-auto">@review.AdminRepliedAt.Value.ToString("dd/MM/yyyy HH:mm")</small>
+                                        }
+                                    </div>
+                                    <p class="mb-0 small">@review.AdminReply</p>
+                                </div>
+                            }
+
+                            @* ── Admin Inline Reply Form (hidden by default) ── *@
+                            @if (Model.IsAdmin)
+                            {
+                                <div class="admin-reply-form mt-3 d-none" id="replyForm-@review.Id">
+                                    <form method="post" asp-page-handler="AdminReply" asp-route-carId="@Model.Car!.Id">
+                                        <input type="hidden" asp-for="AdminReplyReviewId" value="@review.Id" />
+                                        <div class="input-group">
+                                            <input asp-for="AdminReplyText" type="text" class="form-control bg-dark text-light border-secondary form-control-sm"
+                                                   placeholder="Nhập phản hồi chính thức từ HyperCar..." maxlength="2000" required />
+                                            <button type="submit" class="btn btn-accent btn-sm">
+                                                <i class="fas fa-paper-plane"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-secondary btn-sm admin-reply-cancel" data-review-id="@review.Id">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </form>
                                 </div>
                             }
                         </div>
@@ -736,6 +797,19 @@
                     </div>`;
                 }
 
+                // ── Build admin reply bubble HTML ──
+                function buildAdminReplyBubble(adminReply, adminRepliedAt) {
+                    if (!adminReply) return '';
+                    return `<div class="admin-reply-bubble mt-3 p-2 rounded-2" style="background: rgba(255,107,53,0.08); border-left: 3px solid #ff6b35;">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <i class="fas fa-shield-alt text-accent" style="font-size:0.75rem;"></i>
+                            <small class="fw-bold text-accent">Phản hồi từ HyperCar</small>
+                            <small class="text-muted ms-auto">${adminRepliedAt || ''}</small>
+                        </div>
+                        <p class="mb-0 small">${adminReply}</p>
+                    </div>`;
+                }
+
                 return `<div class="review-card mb-4 p-3 rounded-3" data-review-id="${r.id}" data-user-id="${r.userId}" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <div class="d-flex align-items-center gap-2">
@@ -749,6 +823,7 @@
                     ${r.comment ? `<p class="mb-2">${r.comment}</p>` : ''}
                     ${imagesHtml}
                     ${flagHtml}
+                    ${buildAdminReplyBubble(r.adminReply, r.adminRepliedAt)}
                 </div>`;
             }
 
@@ -832,6 +907,54 @@
                     if (alertBox) alertBox.remove();
                 }
                 updateReviewCount();
+            });
+
+            // ═══════════════════════════════════════
+            // EVENT: ReviewReplied (admin replied to a review)
+            // ═══════════════════════════════════════
+            conn.on('ReviewReplied', function (data) {
+                const card = document.querySelector(`[data-review-id="${data.id}"]`);
+                if (!card) return;
+
+                // Remove existing bubble if any
+                const existing = card.querySelector('.admin-reply-bubble');
+                if (existing) existing.remove();
+
+                // Hide reply form
+                const replyForm = card.querySelector('.admin-reply-form');
+                if (replyForm) replyForm.classList.add('d-none');
+
+                // Append new bubble
+                if (data.adminReply) {
+                    const bubble = `<div class="admin-reply-bubble mt-3 p-2 rounded-2" style="background: rgba(255,107,53,0.08); border-left: 3px solid #ff6b35;">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <i class="fas fa-shield-alt text-accent" style="font-size:0.75rem;"></i>
+                            <small class="fw-bold text-accent">Phản hồi từ HyperCar</small>
+                            <small class="text-muted ms-auto">${data.adminRepliedAt || ''}</small>
+                        </div>
+                        <p class="mb-0 small">${data.adminReply}</p>
+                    </div>`;
+                    card.insertAdjacentHTML('beforeend', bubble);
+                }
+            });
+
+            // ── Admin Reply button toggle ──
+            document.addEventListener('click', function (e) {
+                // Show reply form
+                const replyBtn = e.target.closest('.admin-reply-btn');
+                if (replyBtn) {
+                    const reviewId = replyBtn.dataset.reviewId;
+                    const form = document.getElementById(`replyForm-${reviewId}`);
+                    if (form) form.classList.toggle('d-none');
+                    return;
+                }
+                // Cancel reply
+                const cancelBtn = e.target.closest('.admin-reply-cancel');
+                if (cancelBtn) {
+                    const reviewId = cancelBtn.dataset.reviewId;
+                    const form = document.getElementById(`replyForm-${reviewId}`);
+                    if (form) form.classList.add('d-none');
+                }
             });
 
             // ── Start connection + join car group ──

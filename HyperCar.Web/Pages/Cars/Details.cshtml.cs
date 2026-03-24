@@ -43,6 +43,7 @@ namespace HyperCar.Web.Pages.Cars
         public IEnumerable<EligibleOrderItemDto>? EligibleOrderItems { get; set; }
         public bool CanReview { get; set; }
         public string? CurrentUserId { get; set; }
+        public bool IsAdmin { get; set; }
 
         // ── Showroom list for test drive modal ──
         public List<ShowroomOption> Showrooms { get; set; } = new();
@@ -62,6 +63,10 @@ namespace HyperCar.Web.Pages.Cars
         [BindProperty] public IFormFile? EditImage1 { get; set; }
         [BindProperty] public IFormFile? EditImage2 { get; set; }
 
+        // ── Admin Reply Form ──
+        [BindProperty] public int AdminReplyReviewId { get; set; }
+        [BindProperty] public string? AdminReplyText { get; set; }
+
         // ── Feedback ──
         [TempData] public string? SuccessMessage { get; set; }
         [TempData] public string? ErrorMessage { get; set; }
@@ -72,6 +77,7 @@ namespace HyperCar.Web.Pages.Cars
             if (Car == null) return NotFound();
 
             CurrentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            IsAdmin = User.IsInRole("Admin");
 
             Reviews = await _reviewService.GetByCarIdAsync(id, CurrentUserId);
             AverageRating = await _reviewService.GetAverageRatingAsync(id);
@@ -209,6 +215,10 @@ namespace HyperCar.Web.Pages.Cars
 
                 await _reviewHub.Clients.Group($"car-{ReviewCarId}").SendAsync("ReviewAdded", payload);
                 await _reviewHub.Clients.Group("AdminReviews").SendAsync("ReviewAdded", payload);
+
+                // ── Notify admin bell with link to this car's Details page ──
+                var notifMsg = $"💬 <strong>{review.UserName}</strong> vừa đánh giá xe <strong>{review.CarName}</strong> — <a href='/Cars/Details?id={ReviewCarId}' class='text-accent'>Xem ngay</a>";
+                await _notifHub.Clients.Group("Admins").SendAsync("ReceiveAdminNotification", notifMsg, "review");
             }
             else
             {
@@ -216,6 +226,77 @@ namespace HyperCar.Web.Pages.Cars
             }
 
             return RedirectToPage(new { id = ReviewCarId });
+        }
+
+        // ── POST: Admin reply to a review ──
+        public async Task<IActionResult> OnPostAdminReplyAsync(int carId)
+        {
+            if (!User.IsInRole("Admin"))
+                return Forbid();
+
+            if (string.IsNullOrWhiteSpace(AdminReplyText))
+            {
+                ErrorMessage = "Nội dung phản hồi không được để trống.";
+                return RedirectToPage(new { id = carId });
+            }
+
+            var result = await _reviewService.AdminReplyAsync(AdminReplyReviewId, AdminReplyText);
+
+            if (result.Success)
+            {
+                SuccessMessage = "Đã gửi phản hồi thành công.";
+                var review = result.Data!;
+                var payload = new
+                {
+                    review.Id, review.UserId, review.UserName, review.UserAvatar,
+                    review.CarId, review.CarName, review.Rating, review.Comment,
+                    review.ImageUrls, review.IsDeleted, review.IsEdited,
+                    review.IsAiFlagged, review.AiFlagReason, review.OrderItemId,
+                    CreatedDate = review.CreatedDate.ToString("dd/MM/yyyy"),
+                    AdminReply = review.AdminReply,
+                    AdminRepliedAt = review.AdminRepliedAt?.ToString("dd/MM/yyyy HH:mm")
+                };
+
+                await _reviewHub.Clients.Group($"car-{carId}").SendAsync("ReviewReplied", payload);
+                await _reviewHub.Clients.Group("AdminReviews").SendAsync("ReviewReplied", payload);
+
+                // Notify the customer that admin replied
+                await _notifHub.Clients.User(review.UserId).SendAsync("ReceiveCustomerNotification",
+                    $"💬 Admin đã phản hồi đánh giá của bạn về xe <strong>{review.CarName}</strong>", "info");
+            }
+            else
+            {
+                ErrorMessage = result.Error ?? "Có lỗi xảy ra.";
+            }
+
+            return RedirectToPage(new { id = carId });
+        }
+
+        // ── POST: Admin toggle review visibility on Details page ──
+        public async Task<IActionResult> OnPostAdminToggleAsync(int reviewId, int carId)
+        {
+            if (!User.IsInRole("Admin"))
+                return Forbid();
+
+            var reviewBefore = await _reviewService.GetByIdAsync(reviewId);
+            var result = await _reviewService.ToggleReviewVisibilityAsync(reviewId);
+
+            if (result.Success && reviewBefore != null)
+            {
+                var avgRating = await _reviewService.GetAverageRatingAsync(reviewBefore.CarId);
+                var payload = new
+                {
+                    ReviewId = reviewId,
+                    IsDeleted = !reviewBefore.IsDeleted,
+                    CarId = reviewBefore.CarId,
+                    AverageRating = avgRating
+                };
+
+                await _reviewHub.Clients.Group($"car-{carId}").SendAsync("ReviewVisibilityChanged", payload);
+                await _reviewHub.Clients.Group("AdminReviews").SendAsync("ReviewVisibilityChanged", payload);
+            }
+
+            return RedirectToPage(new { id = carId });
         }
 
         // ── POST: Edit existing review ──

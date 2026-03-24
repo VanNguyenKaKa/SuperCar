@@ -175,6 +175,26 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        // Auto-dismiss all inline alert-dismissible banners after 5 seconds
+        (function () {
+            function autoDismissAlerts() {
+                document.querySelectorAll('.alert-dismissible').forEach(function (el) {
+                    if (el.dataset.autoDismissed) return;
+                    el.dataset.autoDismissed = '1';
+                    setTimeout(function () {
+                        var bsAlert = bootstrap.Alert.getOrCreateInstance(el);
+                        bsAlert.close();
+                    }, 5000);
+                });
+            }
+            // Run on initial load
+            autoDismissAlerts();
+            // Also observe dynamically-added alerts (e.g. AJAX-injected)
+            var observer = new MutationObserver(autoDismissAlerts);
+            observer.observe(document.body, { childList: true, subtree: true });
+        })();
+    </script>
     <script src="~/js/chatbot.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

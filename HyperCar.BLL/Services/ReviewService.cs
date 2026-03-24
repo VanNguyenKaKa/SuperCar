@@ -388,6 +388,27 @@ namespace HyperCar.BLL.Services
         }
 
         // ═══════════════════════════════════════════════════
+        // ADMIN REPLY TO REVIEW
+        // ═══════════════════════════════════════════════════
+        public async Task<ServiceResult<ReviewDto>> AdminReplyAsync(int reviewId, string adminReply)
+        {
+            var review = await _unitOfWork.Reviews.Query()
+                .Include(r => r.User)
+                .Include(r => r.Car)
+                .FirstOrDefaultAsync(r => r.Id == reviewId);
+
+            if (review == null)
+                return ServiceResult<ReviewDto>.Fail("Không tìm thấy đánh giá.");
+
+            review.AdminReply = adminReply.Trim();
+            review.AdminRepliedAt = DateTime.UtcNow;
+            _unitOfWork.Reviews.Update(review);
+            await _unitOfWork.SaveChangesAsync();
+
+            return ServiceResult<ReviewDto>.Ok(MapToDto(review));
+        }
+
+        // ═══════════════════════════════════════════════════
         // PRIVATE HELPERS
         // ═══════════════════════════════════════════════════
 
@@ -464,7 +485,9 @@ namespace HyperCar.BLL.Services
                 IsAiFlagged = r.IsAiFlagged,
                 AiFlagReason = r.AiFlagReason,
                 OrderItemId = r.OrderItemId,
-                CreatedDate = r.CreatedDate
+                CreatedDate = r.CreatedDate,
+                AdminReply = r.AdminReply,
+                AdminRepliedAt = r.AdminRepliedAt
             };
         }
 

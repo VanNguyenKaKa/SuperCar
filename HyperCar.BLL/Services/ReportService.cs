@@ -161,6 +161,31 @@ namespace HyperCar.BLL.Services
                 .ToList();
         }
 
+        public async Task<IEnumerable<TopSellingCarDto>> GetTopSellingCarsAsync(int count, DateTime from, DateTime to)
+        {
+            var orderItems = await _unitOfWork.OrderItems.Query()
+                .Include(oi => oi.Car).ThenInclude(c => c.Brand)
+                .Include(oi => oi.Order)
+                .Where(oi => (oi.Order.Status == OrderStatus.Completed || oi.Order.Status == OrderStatus.Delivered)
+                    && oi.Order.CreatedDate >= from && oi.Order.CreatedDate <= to)
+                .ToListAsync();
+
+            return orderItems
+                .GroupBy(oi => new { oi.CarId, oi.Car.Name, BrandName = oi.Car.Brand?.Name, oi.Car.ImageUrl })
+                .Select(g => new TopSellingCarDto
+                {
+                    CarId = g.Key.CarId,
+                    CarName = g.Key.Name,
+                    BrandName = g.Key.BrandName,
+                    ImageUrl = g.Key.ImageUrl,
+                    TotalSold = g.Sum(oi => oi.Quantity),
+                    TotalRevenue = g.Sum(oi => oi.Price * oi.Quantity)
+                })
+                .OrderByDescending(t => t.TotalSold)
+                .Take(count)
+                .ToList();
+        }
+
         public async Task<Dictionary<string, int>> GetOrdersByStatusAsync()
         {
             var orders = await _unitOfWork.Orders.Query().ToListAsync();

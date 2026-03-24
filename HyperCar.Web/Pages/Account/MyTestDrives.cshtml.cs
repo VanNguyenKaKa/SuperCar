@@ -2,9 +2,11 @@ using HyperCar.BLL.DTOs;
 using HyperCar.BLL.Helpers;
 using HyperCar.BLL.Interfaces;
 using HyperCar.DAL.Enums;
+using HyperCar.Web.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 
 namespace HyperCar.Web.Pages.Account
@@ -13,9 +15,13 @@ namespace HyperCar.Web.Pages.Account
     public class MyTestDrivesModel : PageModel
     {
         private readonly ITestDriveService _testDriveService;
+        private readonly IHubContext<NotificationHub> _notifHub;
 
-        public MyTestDrivesModel(ITestDriveService testDriveService)
-            => _testDriveService = testDriveService;
+        public MyTestDrivesModel(ITestDriveService testDriveService, IHubContext<NotificationHub> notifHub)
+        {
+            _testDriveService = testDriveService;
+            _notifHub = notifHub;
+        }
 
         public IEnumerable<TestDriveBookingDto> Bookings { get; set; } = [];
 
@@ -32,9 +38,33 @@ namespace HyperCar.Web.Pages.Account
         public async Task<IActionResult> OnPostCancelAsync(int bookingId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+            // Load booking info BEFORE cancelling (to get car name, date, etc.)
+            var allBookings = await _testDriveService.GetUserBookingsAsync(userId);
+            var booking = allBookings.FirstOrDefault(b => b.Id == bookingId);
+
             var result = await _testDriveService.CancelBookingAsync(bookingId, userId);
             if (result.Success)
+            {
                 SuccessMessage = "Đã hủy lịch lái thử.";
+
+                if (booking != null)
+                {
+                    // Bell notification → Admin group
+                    await _notifHub.Clients.Group("Admins").SendAsync(
+                        "ReceiveAdminNotification",
+                        $"❌ Khách hàng {booking.UserName} đã hủy lịch lái thử xe {booking.CarName} ngày {booking.ScheduledDate:dd/MM/yyyy HH:mm}.",
+                        "danger");
+
+                    // Auto-reload admin TestDrives page
+                    await _notifHub.Clients.Group("Admins").SendAsync(
+                        "ReceiveTestDriveCancelled");
+
+                    // Slot released → Details page real-time
+                    await _notifHub.Clients.All.SendAsync(
+                        "ReceiveSlotReleased", booking.CarId, booking.ScheduledDate.ToString("yyyy-MM-ddTHH:mm:ss"));
+                }
+            }
             else
                 ErrorMessage = result.Error;
             return RedirectToPage();

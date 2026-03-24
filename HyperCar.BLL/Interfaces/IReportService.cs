@@ -10,6 +10,7 @@ namespace HyperCar.BLL.Interfaces
         Task<IEnumerable<RevenueReportDto>> GetRevenueByQuarterAsync(int year);
         Task<IEnumerable<RevenueReportDto>> GetRevenueByYearAsync();
         Task<IEnumerable<TopSellingCarDto>> GetTopSellingCarsAsync(int count = 10);
+        Task<IEnumerable<TopSellingCarDto>> GetTopSellingCarsAsync(int count, DateTime from, DateTime to);
         Task<Dictionary<string, int>> GetOrdersByStatusAsync();
         Task<double> GetPaymentSuccessRateAsync();
         Task<Dictionary<string, int>> GetShippingPerformanceAsync();

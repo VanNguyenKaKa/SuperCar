@@ -52,7 +52,7 @@
                                 </td>
                                 <td><span class="badge bg-secondary">@car.Category</span></td>
                                 <td>
-                                    <button class="btn btn-sm btn-outline-warning me-1" onclick="editCar(@car.Id, '@car.Name.Replace("'","\\'")','@car.BrandId','@car.Price','@car.HorsePower','@car.Engine?.Replace("'","\\'")','@car.TopSpeed','@car.Acceleration','@car.Stock','@car.Description?.Replace("'","\\'").Replace("\n","")','@car.ImageUrl','@car.Category')">
+                                    <button class="btn btn-sm btn-outline-warning me-1" onclick="editCar(@car.Id, '@car.Name.Replace("'","\\'")','@car.BrandId','@car.Price','@car.HorsePower','@car.Engine?.Replace("'","\\'")','@car.TopSpeed','@car.Acceleration','@car.Stock','@car.Description?.Replace("'","\\'").Replace("\n","")','@car.DescriptionVi?.Replace("'","\\'").Replace("\n","")','@car.ImageUrl','@car.Category')">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     <form method="post" asp-page-handler="Delete" class="d-inline" onsubmit="return confirm('Xóa xe này?')">
@@ -166,8 +166,12 @@
                             </div>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Mô tả</label>
+                            <label class="form-label">Mô tả (English)</label>
                             <textarea name="CarInput.Description" id="carDesc" rows="3" class="form-control bg-dark text-light border-secondary"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Mô tả (Tiếng Việt)</label>
+                            <textarea name="CarInput.DescriptionVi" id="carDescVi" rows="3" class="form-control bg-dark text-light border-secondary"></textarea>
                         </div>
                     </div>
                 </div>
@@ -198,10 +202,11 @@
             document.getElementById('carStock').value = '';
             document.getElementById('carImageFile').value = '';
             document.getElementById('carDesc').value = '';
+            document.getElementById('carDescVi').value = '';
             document.getElementById('carImagePreviewContainer').style.display = 'none';
         }
 
-        function editCar(id, name, brandId, price, hp, engine, topSpeed, accel, stock, desc, image, category) {
+        function editCar(id, name, brandId, price, hp, engine, topSpeed, accel, stock, desc, descVi, image, category) {
             document.getElementById('carModalTitle').textContent = '✏️ Edit Car';
             document.getElementById('carSubmitBtn').textContent = 'Update Car';
             document.getElementById('carForm').action = '?handler=Edit';
@@ -217,6 +222,7 @@
             document.getElementById('carStock').value = stock;
             document.getElementById('carImageFile').value = '';
             document.getElementById('carDesc').value = desc || '';
+            document.getElementById('carDescVi').value = descVi || '';
             document.getElementById('carCategory').value = category || 'Hypercar';
             // Show existing image preview
             if (image) {

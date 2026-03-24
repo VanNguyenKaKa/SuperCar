@@ -32,6 +32,10 @@ namespace HyperCar.DAL.Entities
 
         public bool IsActive { get; set; } = true;
 
+        [MaxLength(2000)]
+        public string? AdminReply { get; set; }
+        public DateTime? AdminRepliedAt { get; set; }
+
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
         // Navigation properties

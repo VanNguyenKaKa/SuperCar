@@ -144,7 +144,36 @@ namespace HyperCar.Web.Pages.Admin
                 _ => new List<RevenueReportDto>()
             };
 
-            TopCars = (await _reportService.GetTopSellingCarsAsync(5)).ToList();
+            // TopCars filtered by the same date range as revenue
+            if (Mode == "year")
+            {
+                // Year mode = all time, no date filter
+                TopCars = (await _reportService.GetTopSellingCarsAsync(5)).ToList();
+            }
+            else
+            {
+                // Calculate from/to based on mode
+                DateTime topFrom, topTo;
+                switch (Mode)
+                {
+                    case "day":
+                    case "custom":
+                        topFrom = DateFrom;
+                        topTo = DateTo;
+                        break;
+                    case "month":
+                    case "quarter":
+                        topFrom = new DateTime(Year, 1, 1);
+                        topTo = new DateTime(Year, 12, 31, 23, 59, 59);
+                        break;
+                    default:
+                        topFrom = DateTime.MinValue;
+                        topTo = DateTime.MaxValue;
+                        break;
+                }
+                TopCars = (await _reportService.GetTopSellingCarsAsync(5, topFrom, topTo)).ToList();
+            }
+
             OrdersByStatus = await _reportService.GetOrdersByStatusAsync();
         }
     }

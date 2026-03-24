@@ -23,6 +23,22 @@
             var currentStep = Array.IndexOf(statusSteps, order.StatusText);
             if (order.StatusText == "Cancelled" || order.StatusText == "Refunded") currentStep = -1;
 
+            <!-- Flash Messages -->
+            @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>@Model.SuccessMessage
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>@Model.ErrorMessage
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
             <!-- Header -->
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                 <div>
@@ -160,7 +176,7 @@
                     <!-- Timeline -->
                     @if (Model.Timeline.Any())
                     {
-                        <div class="card bg-dark border-secondary">
+                        <div class="card bg-dark border-secondary mb-4">
                             <div class="card-header border-secondary">
                                 <h5 class="mb-0"><i class="fas fa-history me-2 text-accent"></i>Lịch sử đơn hàng</h5>
                             </div>
@@ -197,6 +213,182 @@
                                         </div>
                                     }
                                 </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- ═══════════════════════════════════════════════ -->
+                    <!-- REVIEW SECTION (only for Completed orders)     -->
+                    <!-- ═══════════════════════════════════════════════ -->
+                    @if (order.StatusText == "Completed")
+                    {
+                        <div class="card bg-dark border-secondary mb-4" id="reviewSection">
+                            <div class="card-header border-secondary d-flex align-items-center gap-2">
+                                <i class="fas fa-star text-accent"></i>
+                                <h5 class="mb-0">Đánh giá sản phẩm</h5>
+                                @if (Model.ReviewableCarId > 0 && order.Items.Any())
+                                {
+                                    <a href="/Cars/Details?id=@Model.ReviewableCarId" class="ms-auto text-muted small text-decoration-none">
+                                        <i class="fas fa-external-link-alt me-1"></i>Xem trang xe
+                                    </a>
+                                }
+                            </div>
+                            <div class="card-body">
+
+                                @* ── Write a review form ── *@
+                                @if (Model.CanReview)
+                                {
+                                    <form method="post" asp-page-handler="Review" asp-route-orderId="@order.Id"
+                                          enctype="multipart/form-data" id="orderReviewForm">
+                                        <input type="hidden" asp-for="ReviewCarId" value="@Model.ReviewableCarId" />
+
+                                        <!-- Order Item Dropdown -->
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold">Chọn sản phẩm đánh giá</label>
+                                            <select asp-for="ReviewOrderItemId" class="form-select bg-dark text-light border-secondary" required>
+                                                <option value="">-- Chọn sản phẩm --</option>
+                                                @foreach (var item in Model.EligibleOrderItems!)
+                                                {
+                                                    <option value="@item.OrderItemId">@item.DisplayText</option>
+                                                }
+                                            </select>
+                                        </div>
+
+                                        <!-- Star Rating -->
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold">Đánh giá</label>
+                                            <div class="star-rating-input" data-target="orderAddRatingValue">
+                                                @for (int i = 1; i <= 5; i++)
+                                                {
+                                                    <i class="far fa-star fs-3" data-value="@i" style="cursor: pointer; transition: color 0.15s;"></i>
+                                                }
+                                                <input type="hidden" asp-for="ReviewRating" id="orderAddRatingValue" value="0" />
+                                            </div>
+                                            <div class="text-danger small mt-1 d-none" data-rating-error="orderAddRatingValue">Vui lòng chọn số sao.</div>
+                                        </div>
+
+                                        <!-- Comment -->
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold">Nhận xét</label>
+                                            <textarea asp-for="ReviewComment" class="form-control bg-dark text-light border-secondary" rows="3"
+                                                      placeholder="Chia sẻ trải nghiệm của bạn..." maxlength="2000"></textarea>
+                                        </div>
+
+                                        <!-- 2 Image Upload Slots -->
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold">Ảnh đính kèm <small class="text-muted">(tối đa 2 ảnh, mỗi ảnh &lt; 2MB, .jpg/.png)</small></label>
+                                            <div class="d-flex gap-3">
+                                                <!-- Slot 1 -->
+                                                <div class="image-upload-slot" data-input="orderSlot1Input">
+                                                    <input type="file" asp-for="ReviewImage1" id="orderSlot1Input" accept=".jpg,.jpeg,.png" class="d-none" />
+                                                    <div class="upload-box" id="orderSlot1Box">
+                                                        <i class="fas fa-plus"></i>
+                                                        <small>Ảnh 1</small>
+                                                    </div>
+                                                    <img id="orderSlot1Preview" class="upload-preview d-none" alt="" />
+                                                    <button type="button" class="upload-remove d-none" data-slot="orderSlot1">&times;</button>
+                                                </div>
+                                                <!-- Slot 2 -->
+                                                <div class="image-upload-slot" data-input="orderSlot2Input">
+                                                    <input type="file" asp-for="ReviewImage2" id="orderSlot2Input" accept=".jpg,.jpeg,.png" class="d-none" />
+                                                    <div class="upload-box" id="orderSlot2Box">
+                                                        <i class="fas fa-plus"></i>
+                                                        <small>Ảnh 2</small>
+                                                    </div>
+                                                    <img id="orderSlot2Preview" class="upload-preview d-none" alt="" />
+                                                    <button type="button" class="upload-remove d-none" data-slot="orderSlot2">&times;</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-accent">
+                                            <i class="fas fa-paper-plane me-2"></i>Gửi đánh giá
+                                        </button>
+                                    </form>
+
+                                    <hr class="border-secondary my-4" />
+                                }
+                                else
+                                {
+                                    <div class="alert alert-secondary mb-4">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Bạn đã đánh giá sản phẩm này rồi hoặc không đủ điều kiện để đánh giá.
+                                    </div>
+                                }
+
+                                @* ── Reviews list ── *@
+                                <h6 class="mb-3"><i class="fas fa-comments me-2 text-accent"></i>Đánh giá của khách hàng
+                                    <span class="text-muted ms-1">(@(Model.Reviews?.Count() ?? 0))</span>
+                                </h6>
+
+                                @if (Model.Reviews?.Any() == true)
+                                {
+                                    @foreach (var review in Model.Reviews)
+                                    {
+                                        <div class="review-card mb-4 p-3 rounded-3" data-review-id="@review.Id" data-user-id="@review.UserId"
+                                             style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    @if (!string.IsNullOrEmpty(review.UserAvatar))
+                                                    {
+                                                        <img src="@review.UserAvatar" alt="" class="rounded-circle" style="width:36px;height:36px;object-fit:cover;" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="rounded-circle bg-accent d-flex align-items-center justify-content-center" style="width:36px;height:36px;">
+                                                            <i class="fas fa-user text-white"></i>
+                                                        </div>
+                                                    }
+                                                    <strong>@review.UserName</strong>
+                                                    @if (review.IsEdited)
+                                                    {
+                                                        <span class="badge bg-secondary small" title="Đã chỉnh sửa lúc @(review.UpdatedAt?.ToString("dd/MM/yyyy HH:mm"))">
+                                                            <i class="fas fa-edit me-1"></i>Đã chỉnh sửa
+                                                        </span>
+                                                    }
+                                                </div>
+                                                <span class="text-muted small">@review.CreatedDate.ToString("dd/MM/yyyy")</span>
+                                            </div>
+                                            <div class="star-rating mb-2">
+                                                @for (int i = 1; i <= 5; i++)
+                                                {
+                                                    <i class="fas fa-star @(i <= review.Rating ? "text-warning" : "text-muted")" style="font-size: 0.9rem;"></i>
+                                                }
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(review.Comment))
+                                            {
+                                                <p class="mb-2">@review.Comment</p>
+                                            }
+                                            @if (review.ImageUrls?.Any() == true)
+                                            {
+                                                <div class="d-flex gap-2 mt-2">
+                                                    @foreach (var imgUrl in review.ImageUrls)
+                                                    {
+                                                        <a href="@imgUrl" target="_blank" rel="noopener">
+                                                            <img src="@imgUrl" alt="Review image" class="rounded"
+                                                                 style="width: 120px; height: 90px; object-fit: cover; border: 1px solid rgba(255,255,255,0.1); cursor: zoom-in;" />
+                                                        </a>
+                                                    }
+                                                </div>
+                                            }
+                                            @if (review.IsAiFlagged && Model.CurrentUserId == review.UserId)
+                                            {
+                                                <div class="alert alert-danger py-2 mt-2 mb-0 small" style="border-left: 3px solid #dc3545;">
+                                                    <i class="fas fa-robot me-1"></i>
+                                                    ⚠️ Hệ thống tự động phát hiện ngôn từ không phù hợp. Đánh giá này hiện <strong>chỉ hiển thị với bạn</strong>.
+                                                    @if (!string.IsNullOrEmpty(review.AiFlagReason))
+                                                    {
+                                                        <br /><small class="text-muted">Lý do: @review.AiFlagReason</small>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <p class="text-muted small">Chưa có đánh giá nào cho sản phẩm này.</p>
+                                }
                             </div>
                         </div>
                     }
@@ -279,6 +471,9 @@
                                 <div class="border-top border-secondary pt-3 mt-3 text-center">
                                     <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
                                     <p class="text-success mb-0 small">Đơn hàng đã hoàn thành</p>
+                                    <a href="#reviewSection" class="btn btn-sm btn-outline-accent mt-2">
+                                        <i class="fas fa-star me-1"></i>Xem / Gửi đánh giá
+                                    </a>
                                 </div>
                             }
                             </div>
@@ -289,6 +484,69 @@
         }
     </div>
 </section>
+
+<!-- Upload slot styles -->
+<style>
+    .image-upload-slot {
+        position: relative;
+        width: 100px;
+        height: 100px;
+    }
+    .upload-box {
+        width: 100px;
+        height: 100px;
+        border: 2px dashed rgba(255,255,255,0.2);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: border-color 0.2s, background 0.2s;
+        color: rgba(255,255,255,0.4);
+        gap: 4px;
+    }
+    .upload-box:hover {
+        border-color: var(--accent-color, #ff6b35);
+        background: rgba(255,107,53,0.05);
+        color: var(--accent-color, #ff6b35);
+    }
+    .upload-box i { font-size: 1.4rem; }
+    .upload-box small { font-size: 0.7rem; }
+    .upload-preview {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 2px solid rgba(255,255,255,0.15);
+    }
+    .upload-remove {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #dc3545;
+        color: #fff;
+        border: none;
+        font-size: 14px;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+    }
+    .btn-outline-accent {
+        color: #ff6b35;
+        border-color: #ff6b35;
+    }
+    .btn-outline-accent:hover {
+        background: #ff6b35;
+        color: #fff;
+    }
+</style>
 
 @section Scripts {
     <script>
@@ -309,8 +567,91 @@
             'Processing': 'bg-info', 'Refunded': 'bg-secondary'
         };
 
-        // Listen for order updates via global SignalR connection from site.js
-        // site.js creates the connection; we hook into it after it starts
+        // ── Star Rating ──
+        document.querySelectorAll('.star-rating-input').forEach(container => {
+            const targetId = container.dataset.target;
+            const hiddenInput = document.getElementById(targetId);
+            const stars = container.querySelectorAll('i[data-value]');
+            const errorEl = document.querySelector(`[data-rating-error="${targetId}"]`);
+
+            function highlight(value) {
+                stars.forEach(s => {
+                    const v = parseInt(s.dataset.value);
+                    s.classList.toggle('fas', v <= value);
+                    s.classList.toggle('far', v > value);
+                    s.style.color = v <= value ? '#ffc107' : '';
+                });
+            }
+
+            stars.forEach(star => {
+                star.addEventListener('mouseenter', () => highlight(parseInt(star.dataset.value)));
+                star.addEventListener('click', () => {
+                    hiddenInput.value = star.dataset.value;
+                    highlight(parseInt(star.dataset.value));
+                    if (errorEl) errorEl.classList.add('d-none');
+                });
+            });
+            container.addEventListener('mouseleave', () => highlight(parseInt(hiddenInput.value) || 0));
+        });
+
+        // ── Image Upload Slots ──
+        const maxSize = 2 * 1024 * 1024;
+        const allowedTypes = ['image/jpeg', 'image/png'];
+
+        document.querySelectorAll('.image-upload-slot').forEach(slot => {
+            const inputId = slot.dataset.input;
+            const input = document.getElementById(inputId);
+            if (!input) return;
+
+            const boxId = inputId.replace('Input', 'Box');
+            const previewId = inputId.replace('Input', 'Preview');
+            const slotName = inputId.replace('Input', '');
+
+            const box = document.getElementById(boxId);
+            const preview = document.getElementById(previewId);
+            const removeBtn = slot.querySelector(`[data-slot="${slotName}"]`);
+
+            if (box) box.addEventListener('click', () => input.click());
+
+            input.addEventListener('change', function () {
+                const file = this.files[0];
+                if (!file) return;
+                if (file.size > maxSize) { alert(`File "${file.name}" vượt quá 2MB.`); this.value = ''; return; }
+                if (!allowedTypes.includes(file.type)) { alert(`File "${file.name}" không hỗ trợ.`); this.value = ''; return; }
+
+                const reader = new FileReader();
+                reader.onload = e => {
+                    if (preview) { preview.src = e.target.result; preview.classList.remove('d-none'); }
+                    if (box) box.classList.add('d-none');
+                    if (removeBtn) removeBtn.classList.remove('d-none');
+                };
+                reader.readAsDataURL(file);
+            });
+
+            if (removeBtn) {
+                removeBtn.addEventListener('click', () => {
+                    input.value = '';
+                    if (preview) { preview.src = ''; preview.classList.add('d-none'); }
+                    if (box) box.classList.remove('d-none');
+                    removeBtn.classList.add('d-none');
+                });
+            }
+        });
+
+        // ── Review form validation ──
+        const reviewForm = document.getElementById('orderReviewForm');
+        if (reviewForm) {
+            reviewForm.addEventListener('submit', function (e) {
+                const rating = parseInt(document.getElementById('orderAddRatingValue')?.value);
+                if (!rating || rating < 1 || rating > 5) {
+                    e.preventDefault();
+                    const err = document.querySelector('[data-rating-error="orderAddRatingValue"]');
+                    if (err) err.classList.remove('d-none');
+                }
+            });
+        }
+
+        // ── SignalR: Order status updates ──
         function hookSignalR() {
             if (typeof signalR === 'undefined') { setTimeout(hookSignalR, 300); return; }
 
@@ -329,7 +670,7 @@
                     badge.className = 'badge ' + (badgeMap[newStatus] || 'bg-secondary') + ' fs-6 px-3 py-2';
                     statusText.textContent = statusViMap[newStatus] || newStatus;
                     badge.style.animation = 'none';
-                    badge.offsetHeight; // reflow
+                    badge.offsetHeight;
                     badge.style.animation = 'badgePulse 0.6s ease';
                 }
 
@@ -338,9 +679,7 @@
                 const tracker = document.getElementById('progressTracker');
                 if (tracker && newStep >= 0) {
                     const fill = document.getElementById('progressFill');
-                    if (fill) {
-                        fill.style.width = `calc(${newStep / (statusSteps.length - 1)} * (100% - 120px))`;
-                    }
+                    if (fill) fill.style.width = `calc(${newStep / (statusSteps.length - 1)} * (100% - 120px))`;
                     tracker.querySelectorAll('.step-dot').forEach(dot => {
                         const si = parseInt(dot.dataset.step);
                         const isActive = si <= newStep;
@@ -348,19 +687,11 @@
                         const circle = dot.querySelector('.step-circle');
                         const label = dot.querySelector('.step-label');
                         const icon = circle?.querySelector('i');
-                        if (circle) {
-                            circle.style.background = isActive ? '#ff6b35' : 'rgba(255,255,255,0.1)';
-                            circle.style.boxShadow = isCurrent ? '0 0 12px rgba(255,107,53,0.5)' : 'none';
-                        }
-                        if (icon) {
-                            icon.className = 'fas ' + stepIcons[si] + (isActive ? ' text-white' : ' text-muted');
-                        }
-                        if (label) {
-                            label.className = 'step-label ' + (isActive ? 'text-white' : 'text-muted');
-                        }
+                        if (circle) { circle.style.background = isActive ? '#ff6b35' : 'rgba(255,255,255,0.1)'; circle.style.boxShadow = isCurrent ? '0 0 12px rgba(255,107,53,0.5)' : 'none'; }
+                        if (icon) icon.className = 'fas ' + stepIcons[si] + (isActive ? ' text-white' : ' text-muted');
+                        if (label) label.className = 'step-label ' + (isActive ? 'text-white' : 'text-muted');
                     });
                 } else if (tracker && (newStatus === 'Cancelled' || newStatus === 'Refunded')) {
-                    // Hide progress tracker for cancelled/refunded
                     tracker.innerHTML = '';
                 }
 
@@ -373,8 +704,7 @@
                                 <form method="post" action="?handler=ConfirmReceived">
                                     <input type="hidden" name="orderId" value="${orderId}" />
                                     <input name="__RequestVerificationToken" type="hidden" value="${document.querySelector('input[name=__RequestVerificationToken]')?.value || ''}" />
-                                    <button type="submit" class="btn btn-success w-100 btn-lg"
-                                            onclick="return confirm('Xác nhận bạn đã nhận được hàng?')">
+                                    <button type="submit" class="btn btn-success w-100 btn-lg" onclick="return confirm('Xác nhận bạn đã nhận được hàng?')">
                                         <i class="fas fa-check-circle me-2"></i>Xác nhận đã nhận hàng
                                     </button>
                                     <small class="text-muted d-block text-center mt-2">Đơn hàng sẽ chuyển sang trạng thái "Hoàn thành"</small>
@@ -385,6 +715,7 @@
                             <div class="border-top border-secondary pt-3 mt-3 text-center">
                                 <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
                                 <p class="text-success mb-0 small">Đơn hàng đã hoàn thành</p>
+                                <a href="#reviewSection" class="btn btn-sm btn-outline-accent mt-2"><i class="fas fa-star me-1"></i>Xem / Gửi đánh giá</a>
                             </div>`;
                     } else {
                         confirmArea.innerHTML = '';
@@ -417,11 +748,6 @@
 
             conn.on('ReceivePaymentConfirmation', (updatedOrderId, status) => {
                 if (updatedOrderId !== orderId) return;
-                // Update payment badge
-                const payBadges = document.querySelectorAll('[data-order-id="' + orderId + '"]');
-                // Find the payment status span in the summary
-                const summaryCard = document.querySelector('.sticky-top .badge');
-                // Simpler: just reload the summary section
                 location.reload();
             });
 

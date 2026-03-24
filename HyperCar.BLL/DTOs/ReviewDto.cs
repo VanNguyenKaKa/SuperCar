@@ -20,6 +20,8 @@ namespace HyperCar.BLL.DTOs
         public string? AiFlagReason { get; set; }
         public int? OrderItemId { get; set; }
         public DateTime CreatedDate { get; set; }
+        public string? AdminReply { get; set; }
+        public DateTime? AdminRepliedAt { get; set; }
     }
 
     public class CreateReviewDto

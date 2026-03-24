@@ -154,5 +154,15 @@
 
             conn.start().catch(err => console.log('SignalR error:', err));
         })();
+
+        // Auto-dismiss alerts after 5 seconds
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.alert-dismissible').forEach(function (el) {
+                setTimeout(function () {
+                    var alert = bootstrap.Alert.getOrCreateInstance(el);
+                    if (alert) alert.close();
+                }, 5000);
+            });
+        });
     </script>
 }

@@ -13,6 +13,7 @@ namespace HyperCar.BLL.DTOs
         public decimal Acceleration { get; set; }
         public int Stock { get; set; }
         public string? Description { get; set; }
+        public string? DescriptionVi { get; set; }
         public string? ImageUrl { get; set; }
         public string? ImageGallery { get; set; }
         public string? Category { get; set; }
@@ -33,6 +34,7 @@ namespace HyperCar.BLL.DTOs
         public decimal Acceleration { get; set; }
         public int Stock { get; set; }
         public string? Description { get; set; }
+        public string? DescriptionVi { get; set; }
         public string? ImageUrl { get; set; }
         public string? ImageGallery { get; set; }
         public string? Category { get; set; }

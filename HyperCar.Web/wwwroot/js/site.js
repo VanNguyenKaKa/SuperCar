@@ -1,4 +1,4 @@
-﻿// ===== HyperCar Site JS =====
+// ===== HyperCar Site JS =====
 // SignalR connection + notification bell (Admin & Customer)
 
 (function () {
@@ -142,6 +142,7 @@
             'shipping': 'fas fa-truck text-info',
             'delivered': 'fas fa-box-open text-success',
             'completed': 'fas fa-flag-checkered text-success',
+            'review': 'fas fa-star text-warning',
             'info': 'fas fa-info-circle text-info',
             'warning': 'fas fa-exclamation-triangle text-warning',
             'success': 'fas fa-check-circle text-success',
@@ -257,7 +258,10 @@
         // Admin: receives all system notifications
         connection.on("ReceiveAdminNotification", (message, type) => {
             addNotification(message, type);
-            showToast('Admin Alert', message, type === 'payment' ? 'success' : 'warning');
+            const toastType = type === 'payment' ? 'success' : (type === 'review' ? 'info' : 'warning');
+            // Strip HTML tags for toast (plain text only)
+            const tempEl = document.createElement('div'); tempEl.innerHTML = message;
+            showToast('Thông báo Admin', tempEl.textContent, toastType);
 
             // Dispatch to all registered page handlers
             window.__pageNotifHandlers.forEach(handler => {

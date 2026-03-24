@@ -8,28 +8,12 @@ using System.Text.RegularExpressions;
 
 namespace HyperCar.BLL.Services
 {
-    /// <summary>
-    /// AI content moderation using a SEPARATE Gemini API key.
-    /// Two-layer filtering:
-    ///   1) Local regex pre-filter — catches obvious profanity, spam links, obfuscated words
-    ///   2) Gemini AI — catches nuanced/context-dependent toxic content
-    /// On API failure → defaults to isClean=true (don't block users).
-    /// </summary>
     public class AIModerationService : IAIModerationService
     {
         private readonly Client _moderationClient;
         private readonly string _model;
         private readonly ILogger<AIModerationService> _logger;
 
-        // ══════════════════════════════════════════════════════════
-        // LAYER 1: LOCAL REGEX PRE-FILTER
-        // Catches obvious violations BEFORE calling the AI API
-        // ══════════════════════════════════════════════════════════
-
-        /// <summary>
-        /// Vietnamese profanity patterns — with optional separators between letters
-        /// to catch obfuscation like "đ.ụ", "đ!t", "c.ặ.c", "l ồ n" etc.
-        /// </summary>
         private static readonly string[] ProfanityRoots = new[]
         {
             // Core Vietnamese profanity
@@ -51,29 +35,15 @@ namespace HyperCar.BLL.Services
             "dâm", "sex", "porn", "xxx",
         };
 
-        /// <summary>
-        /// Build regex that allows optional separators (. ! @ # * - _ space) between characters
-        /// to catch obfuscation attempts like "đ.ụ", "c*ặ*c", "l_ồ_n"
-        /// </summary>
         private static readonly Regex ProfanityRegex = BuildProfanityRegex();
 
-        /// <summary>
-        /// Spam URL patterns — catches http, https, www, and common spam TLD patterns
-        /// </summary>
         private static readonly Regex SpamUrlRegex = new(
             @"(https?://|www\.|bit\.ly|tinyurl|t\.co|goo\.gl|shorturl|click\s*here|link\s*:)",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        /// <summary>
-        /// Excessive repeated characters — "aaaaaa", "hahahahaha" etc.
-        /// </summary>
         private static readonly Regex RepeatedCharRegex = new(
             @"(.)\1{7,}",
             RegexOptions.Compiled);
-
-        /// <summary>
-        /// All-caps spam detector (10+ consecutive uppercase chars)
-        /// </summary>
         private static readonly Regex AllCapsSpamRegex = new(
             @"[A-ZÀÁẠẢÃĂẮẰẶẲẴÂẤẦẬẨẪĐÈÉẸẺẼÊẾỀỆỂỄÌÍỊỈĨÒÓỌỎÕÔỐỒỘỔỖƠỚỜỢỞỠÙÚỤỦŨƯỨỪỰỬỮỲÝỴỶỸ]{10,}",
             RegexOptions.Compiled);
@@ -120,10 +90,6 @@ namespace HyperCar.BLL.Services
             var combinedPattern = @"(?:" + string.Join("|", patterns) + @")";
             return new Regex(combinedPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
         }
-
-        /// <summary>
-        /// Run local regex pre-filter. Returns reason string if flagged, null if clean.
-        /// </summary>
         private static string? RunPreFilter(string comment)
         {
             // Normalize: lowercase + remove diacritics-like obfuscation
